@@ -77,43 +77,8 @@ void login_success(SOCKET *client, PLAYER player)
     unsigned char packet_len[5];
     unsigned char temp[5];
 
-    /*
-    printf("%.2x  ",0x02);
-
-    for (int i = 0 ; i < 16; ++i ) {
-        printf("%.2x ", player.uuid[i]);
-    }
-    printf(" ");
-    
-    write_varint(temp, player.nickname_len);
-    for (int i = 0 ; i < 5; ++i ) {
-        printf("%.2x ", temp[i]);
-    }
-    printf(" ");
-    
-    for (int i = 0 ; i < player.nickname_len; ++i ) {
-        printf("%.2x ", player.nickname[i]);
-    }
-    printf(" ");
-
-    write_varint(temp, 0x00);
-    for (int i = 0 ; i < 5; ++i ) {
-        printf("%.2x ", temp[i]);
-    }
-
-    write_varint(temp, 0x01);
-    for (int i = 0 ; i < 5; ++i ) {
-        printf("%.2x ", temp[i]);
-    }
-    */
-
-
-
-
     write_varint(temp, 0x02);
     strcat(data, temp);
-    //write_varint(temp, 0x00);
-    //strcat(data, temp);
     strcat(data, player.uuid);
     write_varint(temp, player.nickname_len);
     strcat(data, temp);
@@ -166,10 +131,6 @@ int main()
     
     while (1) {
         if (recv(client, recv_buffer, RECV_BUFFER_SIZE, 0) == SOCKET_ERROR) break;
-        //for (int i = 0 ; i < RECV_BUFFER_SIZE; ++i ) {
-        //    printf("%.2x ", recv_buffer[i]);
-        //}
-        //printf("\n");
 
         switch (state)
         {
