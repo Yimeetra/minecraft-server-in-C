@@ -1,2 +1,3 @@
-gcc -o server src/server.c -lws2_32
-.\server.exe
+gcc -c src/server.c
+gcc -c src/md5.c
+gcc server.o md5.o -o server -lws2_32

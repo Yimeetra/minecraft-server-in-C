@@ -1,10 +1,19 @@
 #include <stdio.h>
 #include <winsock2.h>
+#include "md5.h"
+#include <string.h>
 
 #define RECV_BUFFER_SIZE 256
 #define SEND_BUFFER_SIZE 256
 #define SEGMENT_BITS 0b01111111
 #define CONTINUE_BIT 0b10000000
+
+typedef struct {
+    unsigned char nickname[16];
+    int nickname_len;
+    unsigned char uuid[16];
+} PLAYER;
+
 
 int read_varint(unsigned char* varint)
 {
@@ -23,6 +32,7 @@ int read_varint(unsigned char* varint)
 
 void write_varint(unsigned char* varint, int value)
 {
+    memset(varint, 0, 5);
     int i = 0;
     while (1) {
         if (!(value & ~SEGMENT_BITS)) {
@@ -37,10 +47,95 @@ void write_varint(unsigned char* varint, int value)
 }
 
 
+void generate_uuid(char* nickname, unsigned char* result)
+{
+    char temp[32];
+    strcat(temp, "OfflinePlayer:");
+    strcat(temp, nickname);
+    md5String(temp, result);
+}
+
+
 void handshake();
-void login_start();
-void login_success();
+void login_start(SOCKET *client, PLAYER *player, char* recv_buffer)
+{
+    player->nickname_len = (int) recv_buffer[2];
+    for (int i = 0; i < player->nickname_len; ++i) {
+        player->nickname[i] = recv_buffer[i+3];
+    }
+    for (int i = 0; i < 16; ++i) {
+        player->uuid[i] = recv_buffer[3+player->nickname_len+i];
+    }
+
+}
+
+
+void login_success(SOCKET *client, PLAYER player)
+{
+    unsigned char send_buffer[SEND_BUFFER_SIZE] = {0};
+    unsigned char data[SEND_BUFFER_SIZE] = {0};
+    unsigned char packet_len[5];
+    unsigned char temp[5];
+
+    /*
+    printf("%.2x  ",0x02);
+
+    for (int i = 0 ; i < 16; ++i ) {
+        printf("%.2x ", player.uuid[i]);
+    }
+    printf(" ");
+    
+    write_varint(temp, player.nickname_len);
+    for (int i = 0 ; i < 5; ++i ) {
+        printf("%.2x ", temp[i]);
+    }
+    printf(" ");
+    
+    for (int i = 0 ; i < player.nickname_len; ++i ) {
+        printf("%.2x ", player.nickname[i]);
+    }
+    printf(" ");
+
+    write_varint(temp, 0x00);
+    for (int i = 0 ; i < 5; ++i ) {
+        printf("%.2x ", temp[i]);
+    }
+
+    write_varint(temp, 0x01);
+    for (int i = 0 ; i < 5; ++i ) {
+        printf("%.2x ", temp[i]);
+    }
+    */
+
+
+
+
+    write_varint(temp, 0x02);
+    strcat(data, temp);
+    //write_varint(temp, 0x00);
+    //strcat(data, temp);
+    strcat(data, player.uuid);
+    write_varint(temp, player.nickname_len);
+    strcat(data, temp);
+    strcat(data, player.nickname);
+    write_varint(temp, 0x00);
+    strcat(data, temp);
+    write_varint(temp, 0x01);
+    strcat(data, temp);
+
+    write_varint(packet_len, 23+player.nickname_len);
+    strcat(send_buffer, packet_len);
+    strcat(send_buffer, data);
+
+    for (int i = 0 ; i < SEND_BUFFER_SIZE; ++i ) {
+        printf("%.2x ", send_buffer[i]);
+    }
+    printf("\n");
+
+    send(*client, send_buffer , SEND_BUFFER_SIZE, 0);
+}
 void login_acknowledged();
+
 
 
 int main()
@@ -49,12 +144,13 @@ int main()
     SOCKET server;
     SOCKET client;
     SOCKADDR_IN server_addr, client_addr;
+    PLAYER player;
     unsigned char recv_buffer[RECV_BUFFER_SIZE] = {0};
-    unsigned char send_buffer[SEND_BUFFER_SIZE] = {0};
+    unsigned char send_buffer[RECV_BUFFER_SIZE] = {0};
+    unsigned char nickname[16];
+    int nickname_len;
 
     int state = 0;
-    char nickname[16];
-    int nickname_len;
 
     WSAStartup(MAKEWORD(2,2), &wsadata);
 
@@ -69,11 +165,11 @@ int main()
     client = accept(server, NULL, NULL);
     
     while (1) {
-        recv(client, recv_buffer, RECV_BUFFER_SIZE, 0);
-        for (int i = 0 ; i < RECV_BUFFER_SIZE; ++i ) {
-            printf("%.2x ", recv_buffer[i]);
-        }
-        printf("\n");
+        if (recv(client, recv_buffer, RECV_BUFFER_SIZE, 0) == SOCKET_ERROR) break;
+        //for (int i = 0 ; i < RECV_BUFFER_SIZE; ++i ) {
+        //    printf("%.2x ", recv_buffer[i]);
+        //}
+        //printf("\n");
 
         switch (state)
         {
@@ -86,38 +182,25 @@ int main()
             break;
 
         case 1: break;
-        
+
         case 2: 
             switch (recv_buffer[1])
             {
-            case 0x00:  
-                for (int i = 0; i <recv_buffer[2]; ++i) {
-                    nickname[i] = recv_buffer[i+3];
-                }
-                nickname_len = (int) recv_buffer[2];
-                printf("%s\n",nickname);
-                send_buffer[0] = 0x1f;
-                send_buffer[1] = 0x02;
-                for (int i = 0; i < nickname_len+1; ++i) {
-                    send_buffer[i+16-nickname_len] = nickname[i];
-                }
-                send_buffer[17] = nickname_len;
-                for (int i = 0; i < nickname_len+1; ++i) {
-                    send_buffer[i+18] = nickname[i];
-                }
-                for (int i = 0 ; i < SEND_BUFFER_SIZE; ++i ) {
-                    printf("%.2x ", send_buffer[i]);
-                }
-                printf("\n");
-                send(client,send_buffer,SEND_BUFFER_SIZE,0);
+            case 0x00:
+                login_start(&client, &player, recv_buffer);
+                login_success(&client, player);
                 break;
+            case 0x03: state = 3;
+
             
             default:
                 break;
             }
             break;
 
-        case 3: break;
+        case 3: 
+            
+            break;
         
         default: break;
         }
