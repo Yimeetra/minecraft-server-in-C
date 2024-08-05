@@ -1,4 +1,4 @@
-#Minecraft server implementation written in C.
+# Minecraft server implementation written in C.
 
-###TODO:
+### TODO:
   - [ ] rewrite code with new byte-array functions
