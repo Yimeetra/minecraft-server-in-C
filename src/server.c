@@ -5,14 +5,15 @@
 #include <stdbool.h>
 
 #define BUFFER_SIZE 256
-#define SEGMENT_BITS 0b01111111
-#define CONTINUE_BIT 0b10000000
+
+#include "byte_array.h"
 
 typedef struct {
     unsigned char nickname[16];
     int nickname_len;
     unsigned char uuid[16];
     unsigned char locale[16];
+    int locale_len;
     char view_distance;
     char chat_mode;
     bool chat_colors;
@@ -22,121 +23,60 @@ typedef struct {
     bool allow_server_listings;
 } PLAYER;
 
-
-int read_varint(unsigned char* buffer, int *buf_len)
-{
-    int value;
-    unsigned char temp[BUFFER_SIZE];
-
-    int i = 0;
-    while (1) {        
-        value |= (buffer[i] & SEGMENT_BITS) << i*7;
-        if (!(buffer[i] & CONTINUE_BIT)) {
-            break;
-        }
-        i++;
-    }
-    *buf_len -= i+1;
-    for (int j = i; j < BUFFER_SIZE; ++j) {
-        temp[j-i-1] = buffer[j];
-    }
-    memcpy(buffer, temp, BUFFER_SIZE);
-    return value;
-}
-
-
-void write_varint(unsigned char* buffer, int *buf_len, int value)
-{
-    int i = *buf_len;
-    while (1) {
-        if (!(value & ~SEGMENT_BITS)) {
-            buffer[i] = value;
-            break;
-        };    
-        buffer[i] = (value & SEGMENT_BITS) | CONTINUE_BIT;
-        value = (unsigned int) value >> 7;
-        i++;
-    }
-    *buf_len = i+1;
-    return;
-}
-
-void read_string(unsigned char* buffer, int *buf_len, unsigned char* out, int *out_len)
-{
-    unsigned char temp[BUFFER_SIZE];
-
-    *out_len = buffer[0];
-    for (int i = 0; i < *out_len; ++i) {
-        out[i] = buffer[i+1];
-    }
-    *buf_len -= *out_len;
-    for (int j = *out_len; j < BUFFER_SIZE; ++j) {
-        temp[j-*out_len-1] = buffer[j];
-    }
-    memcpy(buffer, temp, BUFFER_SIZE);
-    return;
-}
-
-void write_string(unsigned char* buffer, int *buf_len, unsigned char* in, int in_len)
-{
-    buffer[*buf_len] = in_len;
-    for (int i = 0; i < in_len; ++i) {
-        buffer[*buf_len+i+1] = in[i];
-    }
-    *buf_len += in_len+1;
-    return;
-}
-
-
 void generate_uuid(char* nickname, unsigned char* result)
 {
-    char temp[32];
+    char temp[16];
     strcat(temp, "OfflinePlayer:");
     strcat(temp, nickname);
     md5String(temp, result);
 }
 
 
-void handshake(char* recv_buffer, int *state)
+void handshake(unsigned char* recv_buffer, int *state)
 {
-    int i = read_varint(recv_buffer);
-    *state = recv_buffer[i];
+    *state = recv_buffer[read_varint(recv_buffer)];
 }
 
 
-void login_start(SOCKET *client, PLAYER *player, char* recv_buffer)
+void login_start(SOCKET *client, PLAYER *player, unsigned char* recv_buffer)
 {
-    player->nickname_len = (int) recv_buffer[2];
-    for (int i = 0; i < player->nickname_len; ++i) {
-        player->nickname[i] = recv_buffer[i+3];
-    }
-    for (int i = 0; i < 16; ++i) {
-        player->uuid[i] = recv_buffer[3+player->nickname_len+i];
-    }
+    printf("Login start!\n\n");
 
+    pull_varint(recv_buffer, NULL);
+    pull_varint(recv_buffer, NULL);
+
+    pull_string(recv_buffer, NULL, player->nickname, &player->nickname_len);
+    pull_uuid(recv_buffer, NULL, player->uuid);
 }
 
 
 void login_success(SOCKET *client, PLAYER player)
 {
+    printf("Loign validation start!\n\n");
     unsigned char send_buffer[BUFFER_SIZE] = {0};
     unsigned char data[BUFFER_SIZE] = {0};
-    unsigned char packet_len[5];
-    unsigned char temp[5];
+    unsigned int packet_len = 0;
+    unsigned int temp = 0;
 
-    write_varint(temp, 0x02);
-    strcat(data, temp);
-    strcat(data, player.uuid);
-    write_varint(temp, player.nickname_len);
-    strcat(data, temp);
-    strcat(data, player.nickname);
-    write_varint(temp, 0x00);
-    strcat(data, temp);
-    write_varint(temp, 0x01);
-    strcat(data, temp);
+    //write_varint(temp, 0x02);
+    //strcat(data, temp);
+    //strcat(data, player.uuid);
+    //write_varint(temp, player.nickname_len);
+    //strcat(data, temp);
+    //strcat(data, player.nickname);
+    //write_varint(temp, 0x00);
+    //strcat(data, temp);
+    //write_varint(temp, 0x01);
+    //strcat(data, temp);
 
-    write_varint(packet_len, 23+player.nickname_len);
-    strcat(send_buffer, packet_len);
+    
+    append_varint(data, &packet_len, 0x02);
+    append_uuid(data, &packet_len, player.uuid);
+    append_string(data, &packet_len, player.nickname, player.nickname_len);
+    append_varint(data, &packet_len, 0x00);
+
+    //write_varint(packet_len, 23+player.nickname_len);
+    append_varint(send_buffer, &temp, packet_len+1);
     strcat(send_buffer, data);
 
     for (int i = 0 ; i < BUFFER_SIZE; ++i ) {
@@ -150,18 +90,33 @@ void login_success(SOCKET *client, PLAYER player)
 
 void client_information(char* recv_buffer, PLAYER *player)
 {
-    int packet_len = read_varint(recv_buffer);
-    int pointer = 3;
-    
-    for (int i = 0; i < recv_buffer[2]; ++i) {
-        player->locale[i] = recv_buffer[pointer+i];
-    }
-    pointer += recv_buffer[2];
-    player->view_distance = read_varint()
+    printf("Started client configuration\n\n");
+    pull_varint(recv_buffer, NULL);
+    pull_varint(recv_buffer, NULL);
 
+    pull_string(recv_buffer, NULL, player->locale, &player->locale_len);
+    player->view_distance = pull_byte(recv_buffer, NULL);
+    player->chat_mode = pull_varint(recv_buffer, NULL);
+    player->chat_colors = pull_byte(recv_buffer, NULL);
+    player->displayed_skin_parts = pull_byte(recv_buffer, NULL);
+    player->main_hand = pull_varint(recv_buffer, NULL);
+    player->enable_text_filtering = pull_byte(recv_buffer, NULL);
+    player->allow_server_listings = pull_byte(recv_buffer, NULL);
 }
 
 
+void finish_configuration(SOCKET *client)
+{
+    printf("Finishing configuration\n");
+    unsigned char send_buffer[2] = {0};
+    unsigned int packet_len = 0;
+
+    append_byte(send_buffer, &packet_len, 0x01);
+    append_byte(send_buffer, &packet_len, 0x03);
+
+    send(*client, send_buffer, 2, 0);
+    return;
+}
 
 int main()
 {
@@ -191,6 +146,13 @@ int main()
     
     while (1) {
         if (recv(client, recv_buffer, BUFFER_SIZE, 0) == SOCKET_ERROR) break;
+        printf("Recieved packet: ");
+        for (int i = 0; i < read_varint(recv_buffer)+3; ++i) {
+            printf("%.2x ", recv_buffer[i]);
+        }
+        printf("\n");
+        printf("Current server state: %d\n", state);
+        printf("Packet id: %.2x\n\n", recv_buffer[1]);
 
         switch (state)
         {
@@ -217,15 +179,28 @@ int main()
             }
             break;
 
+
         case 3: 
             switch (recv_buffer[1])
             {
-                case 0x00:
+                case 0x02:
                     client_information(recv_buffer, &player);
+                    finish_configuration(&client);
                     break;
-            
+                case 0x03: state = 4; break;
+
                 default: break;
             }
+            break;
+
+
+
+
+
+
+
+
+        default: break;
         }
     }
 
