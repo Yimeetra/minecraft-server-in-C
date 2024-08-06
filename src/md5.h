@@ -1,5 +1,4 @@
-#ifndef MD5_H
-#define MD5_H
+#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
@@ -20,5 +19,3 @@ void md5Step(uint32_t *buffer, uint32_t *input);
 
 void md5String(char *input, uint8_t *result);
 void md5File(FILE *file, uint8_t *result);
-
-#endif

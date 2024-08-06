@@ -1,8 +1,5 @@
-#include <string.h>
-
-#define SEGMENT_BITS 0b01111111
-#define CONTINUE_BIT 0b10000000
-
+#include "defines.h"
+#include "ByteArray.h"
 
 int pull_varint(unsigned char* buffer, int *buf_len)
 {
