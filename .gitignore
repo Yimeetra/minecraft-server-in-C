@@ -1,5 +1,4 @@
 .vscode
 java
-notes
-*.o
-*.exe
+notes.txt
+build

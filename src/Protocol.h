@@ -2,7 +2,6 @@
 
 #include <winsock2.h>
 #include <stdbool.h>
-#include "defines.h"
 
 typedef struct {
     unsigned char nickname[16];
@@ -24,3 +23,4 @@ void HandleLoginStart(SOCKET *clientSock, Client *client, unsigned char* recv_bu
 void SendLoginSuccess(SOCKET *clientSock, Client *client);
 void HandleConfingurationStart(SOCKET *clientSock, Client *Client, char* recvBuffer);
 void SendConfigurationSucces(SOCKET *clientSock);
+void SendLogin(SOCKET *clientSock);

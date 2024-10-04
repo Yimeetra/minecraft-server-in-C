@@ -1,159 +1,72 @@
-#include "defines.h"
 #include "ByteArray.h"
+#include <malloc.h>
+#include <memory.h>
 
-int pull_varint(unsigned char* buffer, int *buf_len)
-{
-    int value = 0;
-    unsigned char temp[BUFFER_SIZE];
+void ba_new(ByteArray* byte_array, int length) {
+    byte_array->bytes = (byte*)malloc(length*sizeof(byte));
+    byte_array->length = length;
+}
 
+void ba_append_byte(ByteArray* byte_array, byte value) {
+    byte_array->count += 1;
+    if (byte_array->length < byte_array->count) {
+        byte_array->length += 1;
+        byte_array->bytes = realloc(byte_array->bytes, byte_array->length*sizeof(value));
+    }
+    byte_array->bytes = realloc(byte_array->bytes, byte_array->length*sizeof(value));
+    byte_array->bytes[byte_array->length-1] = value;
+}
+
+byte ba_read_byte(ByteArray* byte_array) {
+    return byte_array->bytes[0];
+}
+
+int ba_read_varint(ByteArray* byte_array) {
+    int result = 0;
     int i = 0;
-    while (1) {        
-        value |= (buffer[i] & SEGMENT_BITS) << i*7;
-        if (!(buffer[i] & CONTINUE_BIT)) {
-            break;
-        }
-        i++;
-    }
-    if (buf_len) *buf_len -= i+1;
-    for (int j = 0; j < BUFFER_SIZE; ++j) {
-        temp[j] = buffer[j+i+1];
-    }
-    memcpy(buffer, temp, BUFFER_SIZE);
-    return value;
-}
 
-
-void pull_string(unsigned char* buffer, int *buf_len, unsigned char* out, int *out_len)
-{
-    unsigned char temp[BUFFER_SIZE];
-
-    *out_len = buffer[0];
-  
-    for (int i = 0; i < *out_len; ++i) {
-        out[i] = buffer[i+1];
-    }
-    if (buf_len) *buf_len -= *out_len;
-
-    for (int j = 0; j < BUFFER_SIZE; ++j) {
-        temp[j] = buffer[j+*out_len+1];
-    }
-
-    memcpy(buffer, temp, BUFFER_SIZE);
-    return;
-}
-
-
-void pull_uuid(unsigned char* buffer, int *buf_len, unsigned char* out)
-{
-    unsigned char temp[BUFFER_SIZE];
-    memcpy(out, buffer, 16);
-
-    if (buf_len) *buf_len -= 16;
-    for (int j = 0; j < BUFFER_SIZE; ++j) {
-        temp[j] = buffer[j+16];
-    }
-    memcpy(buffer, temp, BUFFER_SIZE);
-    return;
-}
-
-
-char pull_byte(unsigned char* buffer, int *buf_len)
-{
-    unsigned char temp[BUFFER_SIZE];
-
-    char value = buffer[0];
-    if (buf_len) *buf_len -= 1;
-    for (int j = 0; j < BUFFER_SIZE; ++j) {
-        temp[j] = buffer[j+1];
-    }
-    memcpy(buffer, temp, BUFFER_SIZE);
-    return value;
-}
-
-
-void append_varint(unsigned char* buffer, int *buf_len, int value)
-{
-    int i = *buf_len;
     while (1) {
-        if (!(value & ~SEGMENT_BITS)) {
-            buffer[i] = value;
-            break;
-        }   
-        buffer[i] = (value & SEGMENT_BITS) | CONTINUE_BIT;
-        value = (unsigned int) value >> 7;
+        result += (byte_array->bytes[i] & SEGMENT_BITS) << i*7;
+        if (!(byte_array->bytes[i] & CONTINUE_BIT)) break;
         i++;
     }
-    *buf_len = i+1;
-    return;
+
+    return result;
 }
 
-
-void append_string(unsigned char* buffer, int *buf_len, unsigned char* in, int in_len)
-{
-    buffer[*buf_len] = in_len;
-    for (int i = 0; i < in_len; ++i) {
-        buffer[*buf_len+i+1] = in[i];
+void ba_append_varint(ByteArray* byte_array, int value) {
+    while (value) {
+        byte chunk = value & SEGMENT_BITS;
+        ba_append_byte(byte_array, chunk | CONTINUE_BIT);
+        value >>= 7;
     }
-    *buf_len += in_len+1;
-    return;
+    byte_array->bytes[byte_array->length-1] &= SEGMENT_BITS;
 }
 
+void ba_shift(ByteArray* byte_array, int value) {
+    byte_array->count -= value;
+    if (byte_array->count < 0) byte_array->count = 0;
 
-void append_uuid(unsigned char* buffer, int *buf_len, unsigned char* uuid)
-{
-    for (int i = 0; i < 16; ++i) {
-        buffer[*buf_len+i] = uuid[i];
-    }
-    *buf_len += 16;
-    return;
+    memcpy(byte_array->bytes, byte_array->bytes+value, byte_array->length-1);
 }
 
-
-void append_byte(unsigned char* buffer, int *buf_len, char byte)
-{
-    buffer[*buf_len] = byte;
-    *buf_len += 1;
-    return;
+byte ba_pull_byte(ByteArray* byte_array) {
+    byte result = byte_array->bytes[0];
+    ba_shift(byte_array, 1);
+    return result;
 }
 
-
-int read_varint(unsigned char* buffer)
-{
-    int value = 0;
+int ba_pull_varint(ByteArray* byte_array) {
+    int result = 0;
     int i = 0;
-    while (1) {        
-        value |= (buffer[i] & SEGMENT_BITS) << i*7;
-        if (!(buffer[i] & CONTINUE_BIT)) {
-            break;
-        }
+
+    while (1) {
+        result += (byte_array->bytes[i] & SEGMENT_BITS) << i*7;
+        if (!(byte_array->bytes[i] & CONTINUE_BIT)) break;
         i++;
     }
-    return value;
-}
 
+    ba_shift(byte_array, i+1);
 
-void read_string(unsigned char* buffer, unsigned char* out, int *out_len)
-{
-    unsigned char temp[BUFFER_SIZE];
-
-    *out_len = buffer[0];
-    for (int i = 0; i < *out_len; ++i) {
-        out[i] = buffer[i+1];
-    }
-    return;
-}
-
-
-void read_uuid(unsigned char* buffer, unsigned char* out)
-{
-    unsigned char temp[BUFFER_SIZE];
-    memcpy(out, buffer, 16);
-
-    return;
-}
-
-
-char read_byte(unsigned char* buffer)
-{
-    return buffer[0];
+    return result;
 }

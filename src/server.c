@@ -2,13 +2,14 @@
 #include <winsock2.h>
 #include <string.h>
 #include <stdbool.h>
-#include "defines.h"
 #include "ByteArray.h"
 #include "md5.h"
-#include "Protocol.h"
+//#include "Protocol.h"
+#include "Packet.h"
+
+#define BUFFER_SIZE 1024
 
 void generate_uuid(char* nickname, unsigned char* result)
-
 {
     char temp[16];
     strcat(temp, "OfflinePlayer:");
@@ -22,11 +23,12 @@ int main()
     SOCKET server;
     SOCKET client;
     SOCKADDR_IN server_addr, client_addr;
-    Client player;
-    unsigned char recv_buffer[BUFFER_SIZE] = {0};
-    unsigned char send_buffer[BUFFER_SIZE] = {0};
-    unsigned char nickname[16];
-    int nickname_len;
+    //Client player;
+    ByteArray recv_buffer = {0};
+    ByteArray send_buffer = {0};
+
+    ba_new(&recv_buffer, BUFFER_SIZE);
+    ba_new(&send_buffer, BUFFER_SIZE);
 
     int state = 0;
 
@@ -40,18 +42,33 @@ int main()
     bind(server,(SOCKADDR*) &server_addr, sizeof(server_addr));
     listen(server, 0);
 
+    printf("Server is running on port 25565\n");
+
     client = accept(server, NULL, NULL);
+
     
     while (1) {
-        if (recv(client, recv_buffer, BUFFER_SIZE, 0) == SOCKET_ERROR) break;
-        printf("Recieved packet: ");
-        for (int i = 0; i < read_varint(recv_buffer)+1; ++i) {
-            printf("%.2x ", recv_buffer[i]);
+        if (recv(client, recv_buffer.bytes, BUFFER_SIZE, 0) == 0) {
+            printf("Client closed connection\n");
+            break;
+        }
+        recv_buffer.length = ba_read_varint(&recv_buffer);
+        recv_buffer.count = ba_read_varint(&recv_buffer);
+
+        Packet recieved_packet = {0};
+        parse_packet(&recieved_packet, &recv_buffer);
+
+        printf("Received packet:\n");
+        printf("  Length = %i\n", recieved_packet.length);
+        printf("  Id = %i\n", recieved_packet.id);
+        printf("  Data = ");
+        for (int i = 0; i < recieved_packet.length; ++i) {
+            printf("%.2x ", recieved_packet.data->bytes[i]);
         }
         printf("\n");
-        printf("Current server state: %d\n", state);
-        printf("Packet id: %.2x\n\n", recv_buffer[1]);
-
+        printf("Current server state: %d\n\n", state);
+        
+        /*
         switch (state)
         {
         case 0:
@@ -77,13 +94,18 @@ int main()
             switch (recv_buffer[1])
             {
                 case 0x02: HandleConfingurationStart(&client, &player, recv_buffer); break;
-                case 0x03: state = 4; break;
+                case 0x03: 
+                    state = 4; 
+                    SendLogin(&client);
+                    
+                    break;
                 default: break;
             }
             break;
 
         default: break;
         }
+        */
     }
 
     
