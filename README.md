@@ -1,7 +1,7 @@
 # Minecraft server implementation written in C.
 
 ## Current functionality:
-Basically, it can do nothing :)    Yet
+Basically, it can do nothing.... Yet :) \
 The only functionality now is recieving packets and printing their data.
 
 ### TODO:
