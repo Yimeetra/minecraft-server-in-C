@@ -19,55 +19,80 @@ void generate_uuid(char* nickname, unsigned char* result)
 
 int main()
 {
+    // init WSA
     WSADATA wsadata;
-    SOCKET server;
-    SOCKET client;
-    SOCKADDR_IN server_addr, client_addr;
-    //Client player;
+    WSAStartup(MAKEWORD(2,2), &wsadata);
+
+    TIMEVAL tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    // init buffers 
     ByteArray recv_buffer = {0};
     ByteArray send_buffer = {0};
 
     ba_new(&recv_buffer, BUFFER_SIZE);
     ba_new(&send_buffer, BUFFER_SIZE);
 
+    // init sockets
+    SOCKET server;
+    SOCKET client;
+    SOCKADDR_IN server_addr, client_addr;
+    fd_set fd_in, fd_out;
+
     int state = 0;
 
-    WSAStartup(MAKEWORD(2,2), &wsadata);
+
+    // init server socket
+    server = socket(AF_INET, SOCK_STREAM, 0);
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.S_un.S_addr = INADDR_ANY;
     server_addr.sin_port = htons(25565);
 
-    server = socket(AF_INET, SOCK_STREAM, 0);
     bind(server,(SOCKADDR*) &server_addr, sizeof(server_addr));
     listen(server, 0);
 
+    //init client socket
+    client = socket(AF_INET, SOCK_STREAM, 0);
+
     printf("Server is running on port 25565\n");
-
-    client = accept(server, NULL, NULL);
-
     
     while (1) {
-        if (recv(client, recv_buffer.bytes, BUFFER_SIZE, 0) == 0) {
-            printf("Client closed connection\n");
-            break;
-        }
-        recv_buffer.length = ba_read_varint(&recv_buffer);
-        recv_buffer.count = ba_read_varint(&recv_buffer);
+        FD_ZERO(&fd_in);
+        FD_ZERO(&fd_out);
 
-        Packet recieved_packet = {0};
-        parse_packet(&recieved_packet, &recv_buffer);
+        FD_SET(server, &fd_in);
 
-        printf("Received packet:\n");
-        printf("  Length = %i\n", recieved_packet.length);
-        printf("  Id = %i\n", recieved_packet.id);
-        printf("  Data = ");
-        for (int i = 0; i < recieved_packet.length; ++i) {
-            printf("%.2x ", recieved_packet.data->bytes[i]);
+        FD_SET(client, &fd_in);
+        FD_SET(client, &fd_out);
+
+        int select_result = select(0, &fd_in, &fd_out, NULL, &tv);
+        if (select_result > 0) {
+            if (FD_ISSET(server, &fd_in)) {
+                printf("Incomming connection\n");
+                client = accept(server, NULL, NULL);        
+            }
+
+            if (FD_ISSET(client, &fd_in)) {
+                if (recv(client, recv_buffer.bytes, BUFFER_SIZE, 0) == 0) {
+                    printf("Connection closed\n");
+                    closesocket(client);
+                }
+                Packet recieved_packet = {0};
+                parse_packet(&recieved_packet, &recv_buffer);
+
+                printf("Received packet:\n");
+                printf("  Length = %i\n", recieved_packet.length);
+                printf("  Id = %i\n", recieved_packet.id);
+                printf("  Data = ");
+                for (int i = 0; i < recieved_packet.length; ++i) {
+                    printf("%.2x ", recieved_packet.data->bytes[i]);
+                }
+                printf("\n");
+                printf("Current server state: %d\n\n", state);
+            }
         }
-        printf("\n");
-        printf("Current server state: %d\n\n", state);
-        
         /*
         switch (state)
         {
