@@ -6,6 +6,7 @@
 void ba_new(ByteArray* byte_array, int length) {
     byte_array->bytes = (byte*)malloc(length*sizeof(byte));
     byte_array->length = length;
+    byte_array->count = 0;
 }
 
 void ba_append_byte(ByteArray* byte_array, byte value) {
@@ -14,7 +15,6 @@ void ba_append_byte(ByteArray* byte_array, byte value) {
         byte_array->length += 1;
         byte_array->bytes = realloc(byte_array->bytes, byte_array->length*sizeof(value));
     }
-    byte_array->bytes = realloc(byte_array->bytes, byte_array->length*sizeof(value));
     byte_array->bytes[byte_array->length-1] = value;
 }
 
