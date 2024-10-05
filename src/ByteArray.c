@@ -1,6 +1,7 @@
 #include "ByteArray.h"
 #include <malloc.h>
 #include <memory.h>
+#include <stdio.h>
 
 void ba_new(ByteArray* byte_array, int length) {
     byte_array->bytes = (byte*)malloc(length*sizeof(byte));
@@ -69,4 +70,18 @@ int ba_pull_varint(ByteArray* byte_array) {
     ba_shift(byte_array, i+1);
 
     return result;
+}
+
+void ba_append(ByteArray* byte_array, void* value, int size) {
+    for (int i = size-1; i >= 0; --i) {
+        ba_append_byte(byte_array, ((byte*)value)[i]);
+    }
+}
+
+void ba_append_array(ByteArray* byte_array, void* array, int length, int items_size) {
+    for (int i = 0; i < length; ++i) {
+        for (int j = items_size-1; j >= 0; --j) {
+            ba_append_byte(byte_array, ((byte*)array)[i*items_size+j]);
+        }
+    }
 }

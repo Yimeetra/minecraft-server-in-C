@@ -7,7 +7,7 @@ typedef unsigned char byte;
 typedef struct {
     int length;
     int count;
-    byte *bytes; 
+    byte *bytes;
 } ByteArray;
 
 void ba_append_byte(ByteArray* byte_array, byte value);
@@ -18,3 +18,5 @@ void ba_shift(ByteArray* byte_array, int value);
 byte ba_pull_byte(ByteArray* byte_array);
 int ba_pull_varint(ByteArray* byte_array);
 void ba_new(ByteArray* byte_array, int length);
+void ba_append(ByteArray* byte_array, void* value, int size);
+void ba_append_array(ByteArray* byte_array, void* array, int length, int items_size);
