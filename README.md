@@ -6,6 +6,7 @@ The only functionality now is recieving packets and printing their data.
 
 ### TODO:
   - [ ] rewrite Protocol.c with current structures and methods.
+  - [ ] create client struct (socket, gameState, nickname, etc.).
   - [ ] write basic world loader or something like that.
   - [ ] make possible for player to join world.
   - [ ] make possible multiple connections.
