@@ -3,10 +3,12 @@
 #include <memory.h>
 #include <stdio.h>
 
-void ba_new(ByteArray* byte_array, int length) {
-    byte_array->bytes = (byte*)malloc(length*sizeof(byte));
-    byte_array->length = length;
-    byte_array->count = 0;
+ByteArray ba_new(int length) {
+    ByteArray byte_array;
+    byte_array.bytes = (byte*)malloc(length*sizeof(byte));
+    byte_array.length = length;
+    byte_array.count = 0;
+    return byte_array;
 }
 
 void ba_append_byte(ByteArray* byte_array, byte value) {

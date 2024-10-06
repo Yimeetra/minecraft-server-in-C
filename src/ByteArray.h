@@ -17,6 +17,6 @@ byte ba_read_byte(ByteArray* byte_array);
 void ba_shift(ByteArray* byte_array, int value);
 byte ba_pull_byte(ByteArray* byte_array);
 int ba_pull_varint(ByteArray* byte_array);
-void ba_new(ByteArray* byte_array, int length);
+ByteArray ba_new(int length);
 void ba_append(ByteArray* byte_array, void* value, int size);
 void ba_append_array(ByteArray* byte_array, void* array, int length, int items_size);

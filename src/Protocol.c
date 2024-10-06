@@ -1,14 +1,26 @@
 #include "Protocol.h"
-#include "ByteArray.h"
 #include <stdio.h>
-#include <winbase.h>
+#include <winsock2.h>
+#include "Client.h"
 
-void Handshake(unsigned char* recvBuffer, int *state)
+void HandleHandshake(Packet *packet, Client *client)
 {
-    *state = recvBuffer[read_varint(recvBuffer)];
+    client->game_state = packet->data->bytes[packet->data->length-1];
 }
 
+void HanldeStatusRequest(Packet *packet, Client *client) {
+    SendStatusResponse(packet, client);
+}
 
+void SendStatusResponse(Packet *packet, Client *client) {
+    byte *response = "{\"version\":{\"name\":\"1.19.4\",\"protocol\":762}}";
+    //memset(client->socket_info.data_buf.bytes, 0, client->socket_info.data_buf.length);
+    memcpy(client->socket_info.data_buf.bytes, response, sizeof(response));
+    client->socket_info.data_buf.count = sizeof(response);
+    client->socket_info.bytes_send = sizeof(response);
+}
+
+/*
 void HandleLoginStart(SOCKET *clientSock, Client *client, unsigned char* recvBuffer)
 {
     printf("Login start!\n\n");
@@ -118,3 +130,4 @@ void SendLogin(SOCKET *clientSock)
 
     send(*clientSock, send_buffer , BUFFER_SIZE, 0);
 }
+*/
