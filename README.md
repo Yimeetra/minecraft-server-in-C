@@ -10,3 +10,4 @@ The only functionality now is recieving packets and printing their data.
   - [ ] write basic world loader or something like that.
   - [ ] make possible for player to join world.
   - [x] make possible multiple connections.
+  - [ ] handle multiple packits in one recv.
