@@ -11,13 +11,20 @@ ByteArray ba_new(int length) {
     return byte_array;
 }
 
+ByteArray ba_copy(ByteArray byte_array) {
+    ByteArray copy = byte_array;
+    copy.bytes = malloc(byte_array.length);
+    memcpy(copy.bytes, byte_array.bytes, byte_array.length);
+    return copy;
+}
+
 void ba_append_byte(ByteArray* byte_array, byte value) {
     byte_array->count += 1;
     if (byte_array->length < byte_array->count) {
         byte_array->length += 1;
         byte_array->bytes = realloc(byte_array->bytes, byte_array->length*sizeof(value));
     }
-    byte_array->bytes[byte_array->length-1] = value;
+    byte_array->bytes[byte_array->count-1] = value;
 }
 
 byte ba_read_byte(ByteArray* byte_array) {
@@ -43,7 +50,7 @@ void ba_append_varint(ByteArray* byte_array, int value) {
         ba_append_byte(byte_array, chunk | CONTINUE_BIT);
         value >>= 7;
     }
-    byte_array->bytes[byte_array->length-1] &= SEGMENT_BITS;
+    byte_array->bytes[byte_array->count-1] &= SEGMENT_BITS;
 }
 
 void ba_shift(ByteArray* byte_array, int value) {

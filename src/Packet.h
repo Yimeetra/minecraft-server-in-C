@@ -3,9 +3,20 @@
 #include "ByteArray.h"
 
 typedef struct {
+    int full_length;
     int length;
     int id;
-    ByteArray* data;
+    ByteArray data;
 } Packet;
 
-void parse_packet(Packet* packet, ByteArray* data);
+typedef struct {
+    int length;
+    Packet *packets;
+} PacketQueue;
+
+Packet parse_packet(ByteArray data);
+void PacketQueue_append(PacketQueue* packet_queue, Packet packet);
+Packet PacketQueue_pull(PacketQueue* packet_queue);
+PacketQueue PacketQueue_new();
+PacketQueue PacketQueue_copy(PacketQueue packet_queue);
+Packet Packet_copy(Packet packet_queue);

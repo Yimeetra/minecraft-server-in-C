@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include "Client.h"
+#include <string.h>
 
 void HandleHandshake(Packet *packet, Client *client)
 {
-    client->game_state = packet->data->bytes[packet->data->length-1];
+    client->game_state = packet->data.bytes[packet->data.length-1];
 }
 
 void HanldeStatusRequest(Packet *packet, Client *client) {
@@ -13,11 +14,19 @@ void HanldeStatusRequest(Packet *packet, Client *client) {
 }
 
 void SendStatusResponse(Packet *packet, Client *client) {
-    byte *response = "{\"version\":{\"name\":\"1.19.4\",\"protocol\":762}}";
-    //memset(client->socket_info.data_buf.bytes, 0, client->socket_info.data_buf.length);
-    memcpy(client->socket_info.data_buf.bytes, response, sizeof(response));
-    client->socket_info.data_buf.count = sizeof(response);
-    client->socket_info.bytes_send = sizeof(response);
+    byte response[] = "{\"version\":{\"name\":\"1.19.4\",\"protocol\":762}}";
+
+    memset(client->socket_info.send_buf.bytes, 0, client->socket_info.send_buf.length);
+    ba_append_varint(&client->socket_info.send_buf, sizeof(response)+2);
+    ba_append_byte(&client->socket_info.send_buf, 0x00);
+    ba_append_varint(&client->socket_info.send_buf, sizeof(response)+1);
+    ba_append_array(&client->socket_info.send_buf, response, sizeof(response), 1);
+    client->socket_info.send_buf.count = sizeof(response)+3;
+    printf("Bytes to send: ");
+    for (int i = 0; i < client->socket_info.send_buf.count; ++i) {
+        printf("%.2x ", client->socket_info.send_buf.bytes[i]);
+    }
+    printf("\n");
 }
 
 /*

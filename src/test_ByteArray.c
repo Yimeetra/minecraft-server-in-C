@@ -123,6 +123,36 @@ int test_append_array() {
     return 0;
 }
 
+int test_copy() {
+    ByteArray a = {0};
+    ByteArray b = {0};
+
+    ba_append_byte(&a, 0x11);
+    ba_append_byte(&a, 0x22);
+    ba_append_byte(&a, 0x44);
+
+    b = ba_copy(a);
+
+    assert(b.bytes[0] = 0x11);
+    assert(b.bytes[1] = 0x22);
+    assert(b.bytes[2] = 0x44);
+    assert(&b != &a);
+    assert(b.bytes != a.bytes);
+
+    ba_shift(&a, 1);
+
+    assert(a.bytes[0] = 0x22);
+    assert(a.bytes[1] = 0x44);
+    assert(a.bytes[2] = 0x44);
+
+    assert(b.bytes[0] = 0x11);
+    assert(b.bytes[1] = 0x22);
+    assert(b.bytes[2] = 0x44);
+
+    
+    return 0;
+}
+
 int main() {
     assert(test_append_byte() == 0);
     assert(test_append_varint() == 0);
@@ -132,6 +162,7 @@ int main() {
     assert(test_pull_varint() == 0);
     assert(test_append() == 0);
     assert(test_append_array() == 0);
+    assert(test_copy() == 0);
 
     printf("Passed all tests!");
     return 0;

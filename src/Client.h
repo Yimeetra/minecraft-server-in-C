@@ -6,9 +6,8 @@
 
 typedef struct {
     SOCKET socket;
-    ByteArray data_buf;
-    int bytes_send;
-    int bytes_recv;
+    ByteArray recv_buf;
+    ByteArray send_buf;
 } SocketInfo;
 
 typedef struct {
