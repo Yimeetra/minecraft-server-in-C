@@ -20,3 +20,6 @@ Packet PacketQueue_pull(PacketQueue* packet_queue);
 PacketQueue PacketQueue_new();
 PacketQueue PacketQueue_copy(PacketQueue packet_queue);
 Packet Packet_copy(Packet packet_queue);
+Packet Packet_new(int id);
+void Packet_calculate_length(Packet* packet);
+void packet_to_bytearray(Packet packet, ByteArray* array);

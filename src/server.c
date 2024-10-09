@@ -84,7 +84,6 @@ void handle_packet(Packet* packet, Client* client) {
 
 int main()
 {
-    // init WSA
     WSAStartup(MAKEWORD(2,2), &wsadata);
 
     server = socket(AF_INET, SOCK_STREAM, 0);

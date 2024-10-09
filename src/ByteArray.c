@@ -45,11 +45,11 @@ int ba_read_varint(ByteArray* byte_array) {
 }
 
 void ba_append_varint(ByteArray* byte_array, int value) {
-    while (value) {
+    do {
         byte chunk = value & SEGMENT_BITS;
         ba_append_byte(byte_array, chunk | CONTINUE_BIT);
         value >>= 7;
-    }
+    } while (value);
     byte_array->bytes[byte_array->count-1] &= SEGMENT_BITS;
 }
 

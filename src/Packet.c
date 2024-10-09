@@ -2,6 +2,15 @@
 #include <malloc.h>
 #include <memory.h>
 
+Packet Packet_new(int id) {
+    Packet packet;
+    packet.full_length = 1;
+    packet.id = id;
+    packet.length = 0;
+    packet.data = ba_new(1024);
+    return packet;
+}
+
 Packet parse_packet(ByteArray data) {
     data = ba_copy(data);
     Packet packet;
@@ -19,6 +28,17 @@ Packet Packet_copy(Packet packet) {
     Packet copy = packet;
     copy.data = ba_copy(packet.data);
     return copy;
+}
+
+void Packet_calculate_length(Packet* packet) {
+    packet->length = packet->id/128 + 1 + packet->data.count;
+}
+
+void packet_to_bytearray(Packet packet, ByteArray* array) {
+    Packet_calculate_length(&packet);
+    ba_append_varint(array, packet.length);
+    ba_append_varint(array, packet.id);
+    ba_append_array(array, packet.data.bytes, packet.data.count, 1);
 }
 
 void PacketQueue_append(PacketQueue* packet_queue, Packet packet) {
