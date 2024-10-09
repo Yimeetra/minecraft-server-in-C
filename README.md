@@ -11,5 +11,5 @@ The only functionality now is recieving packets and printing their data.
   - [ ] make possible for player to join world.
   - [x] make possible multiple connections.
   - [x] handle multiple packits in one recv.
-  - [ ] make server pingable.
+  - [x] make server pingable.
   - [ ] create packetizer (method to create packets).

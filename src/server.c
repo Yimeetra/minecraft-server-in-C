@@ -51,7 +51,8 @@ void handle_packet(Packet* packet, Client* client) {
             break;
         case STATUS:
             switch (packet->id) {
-                case 0x00: HanldeStatusRequest(packet, client); break;
+                case 0x00: HandleStatusRequest(packet, client); break;
+                case 0x01: HandlePingRequest(packet, client); break;
                 default:
                     printf("Unimplemented packet with id %d for STATUS game state\n", packet->id);
                     close_connection(client);
@@ -176,46 +177,6 @@ int main()
         //    printf("%d)", clients[i].socket_info.socket);
         //}
         //printf("]\n");
-
-
-        /*
-        switch (state)
-        {
-        case 0:
-            switch (recv_buffer[1])
-            {
-                case 0x00: Handshake(recv_buffer, &state); break; 
-                default: break;
-            }
-            break;
-
-        case 1: break;
-
-        case 2: 
-            switch (recv_buffer[1])
-            {
-                case 0x00: HandleLoginStart(&client, &player, recv_buffer); break;
-                case 0x03: state = 3; break;
-                default: break;
-            }
-            break;
-
-        case 3: 
-            switch (recv_buffer[1])
-            {
-                case 0x02: HandleConfingurationStart(&client, &player, recv_buffer); break;
-                case 0x03: 
-                    state = 4; 
-                    SendLogin(&client);
-                    
-                    break;
-                default: break;
-            }
-            break;
-
-        default: break;
-        }
-        */
     }
 
     

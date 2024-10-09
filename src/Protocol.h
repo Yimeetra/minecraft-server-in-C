@@ -23,8 +23,10 @@
 //} Client;
 
 void HandleHandshake(Packet *packet, Client *client);
-void HanldeStatusRequest(Packet *packet, Client *client);
+void HandleStatusRequest(Packet *packet, Client *client);
 void SendStatusResponse(Packet *packet, Client *client);
+void HandlePingRequest(Packet *packet, Client *client);
+void SendPongResponse(Packet *packet, Client *client);
 //void HandleLoginStart(SOCKET *clientSock, Client *client, unsigned char* recv_buffer);
 //void SendLoginSuccess(SOCKET *clientSock, Client *client);
 //void HandleConfingurationStart(SOCKET *clientSock, Client *Client, char* recvBuffer);
