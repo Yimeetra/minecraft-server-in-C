@@ -24,10 +24,17 @@ fd_set fd_in, fd_out;
 Client clients[MAX_CLIENTS];
 PacketQueue packet_queue;
 
-void close_connection(Client* client) {
-    shutdown(client->socket_info.socket, SD_BOTH);
-    closesocket(client->socket_info.socket);
-    *client = client_new(SOCKET_ERROR);
+void print_packet(Packet packet) {
+    printf("Parsed packet:\n");
+    printf("  Length = %i\n", packet.length);
+    printf("  Id = %i\n", packet.id);
+    printf("  Data:\n");
+    printf("    Length = %i\n", packet.data.length);
+    printf("    Data = ");
+    for (int i = 0; i < packet.data.length; ++i) {
+        printf("%.2x ", packet.data.bytes[i]);
+    }
+    printf("\n\n");
 }
 
 void handle_packet(Packet* packet, Client* client) {
@@ -53,8 +60,18 @@ void handle_packet(Packet* packet, Client* client) {
             break;
         case LOGIN:
             switch (packet->id) {
+                case 0x00: HandleLoginStart(packet, client); break;
+                case 0x03: HandleLoginAckAcknowledged(packet, client); break;
                 default:
                     printf("Unimplemented packet with id %d for LOGIN game state\n", packet->id);
+                    close_connection(client);
+                    break;
+            }
+            break;
+        case CONFIGURATION:
+            switch (packet->id) {
+                default:
+                    printf("Unimplemented packet with id %d for CONFIGURATION game state\n", packet->id);
                     close_connection(client);
                     break;
             }
@@ -121,36 +138,25 @@ int main()
 
             for (int i = 0; i < MAX_CLIENTS; ++i) {
                 Client* client = &clients[i];
+                if (client->socket_info.socket == SOCKET_ERROR) continue;
                 if (FD_ISSET(client->socket_info.socket, &fd_in)) {
                     if (client->socket_info.recv_buf.count <= 0) {
                         client->socket_info.recv_buf.count = recv(client->socket_info.socket, client->socket_info.recv_buf.bytes, BUFFER_SIZE, 0);
-                    }
-                    if (client->socket_info.recv_buf.count <= 0) {
-                        printf("Connection closed\n");
-                        close_connection(client);
-                        break;
-                    }
-                    printf("Recv size is %d\n", client->socket_info.recv_buf.count);
-
-                    while (client->socket_info.recv_buf.bytes[0] != 0) {
-                        Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
-                        //printf("Full packet length = %d\n", recieved_packet.full_length);
-                        ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length);
-
-                        printf("Parsed packet:\n");
-                        printf("  Length = %i\n", recieved_packet.length);
-                        printf("  Id = %i\n", recieved_packet.id);
-                        printf("  Data:\n");
-                        printf("    Length = %i\n", recieved_packet.data.length);
-                        printf("    Data = ");
-                        for (int i = 0; i < recieved_packet.data.length; ++i) {
-                            printf("%.2x ", recieved_packet.data.bytes[i]);
+                        if (client->socket_info.recv_buf.count <= 0) {
+                            printf("Connection closed\n");
+                            close_connection(client);
+                            break;
                         }
-                        printf("\n\n");
+                    }
+                    while (client->socket_info.recv_buf.count > 0) {
+                        Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
+                        ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length);
+                        print_packet(recieved_packet);
 
                         handle_packet(&recieved_packet, client);
                     }
                 }
+
                 if (FD_ISSET(client->socket_info.socket, &fd_out)) {
                     send(client->socket_info.socket, client->socket_info.send_buf.bytes, client->socket_info.send_buf.count, 0);
                     printf("Sent packet\n");

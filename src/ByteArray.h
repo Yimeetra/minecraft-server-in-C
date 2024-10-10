@@ -33,3 +33,7 @@ int ba_pull_int(ByteArray* byte_array);
 void ba_append_string(ByteArray* byte_array, char* string, int size);
 void ba_read_string(ByteArray* byte_array, char* string, int* size);
 void ba_pull_string(ByteArray* byte_array, char* string, int* size);
+
+#define ba_append_bool ba_append_byte
+#define ba_read_bool ba_read_byte
+#define ba_pull_bool ba_pull_byte

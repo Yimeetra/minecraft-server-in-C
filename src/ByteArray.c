@@ -133,12 +133,12 @@ void ba_read_string(ByteArray* byte_array, char* string, int* size) {
     ByteArray copy = ba_copy(*byte_array);
     int temp = ba_pull_varint(&copy);
     memcpy(string, copy.bytes, temp);
-    *size = temp;
+    if (size) *size = temp;
 }
 
 void ba_pull_string(ByteArray* byte_array, char* string, int* size) {
     int temp = ba_pull_varint(byte_array);
     memcpy(string, byte_array->bytes, temp);
     ba_shift(byte_array, temp);
-    *size = temp;
+    if (size) *size = temp;
 }
