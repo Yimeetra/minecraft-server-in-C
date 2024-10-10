@@ -13,3 +13,4 @@ The only functionality now is recieving packets and printing their data.
   - [x] make server pingable.
   - [x] create packetizer (method to create packets).
   - [x] add operations with string for bytearray
+  - [ ] add multithreading.
