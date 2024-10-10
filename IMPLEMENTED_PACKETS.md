@@ -1,37 +1,37 @@
- - [x]    C→S: Handshake State=2                    \
- - [x]    C→S: Login Start                          \
- - [x]    S → C: Login Success                      \
- - [x]    C → S: Login Acknowledged                 \
- - [ ]    C → S: Serverbound Plugin Message         \
- - [ ]    C → S: Client Information                 \
- - [ ]    S → C: Clientbound Plugin Message         \
- - [ ]    S → C: Feature Flags                      \
- - [x]    S → C: Clientbound Known Packs            \
- - [ ]    C → S: Serverbound Known Packs            \
- - [ ]    S → C: Registry Data                      \
- - [ ]    S → C: Update Tags                        \
- - [ ]    S → C: Finish Configuration               \
- - [ ]    C → S: Acknowledge Finish Configuration   \
- - [ ]    S → C: Login (play)                       \
- - [ ]    S → C: Change Difficulty                  \
- - [ ]    S → C: Player Abilities                   \
- - [ ]    S → C: Set Held Item                      \
- - [ ]    S → C: Update Recipes                     \
- - [ ]    S → C: Entity Event                       \
- - [ ]    S → C: Commands                           \
- - [ ]    S → C: Update Recipe Book                 \
- - [ ]    S → C: Synchronize Player Position        \
- - [ ]    C → S: Confirm Teleportation              \
- - [ ]    C → S: Set Player Position and Rotation   \
- - [ ]    S → C: Server Data                        \
- - [ ]    S → C: Player Info Update                 \
- - [ ]    S → C: Player Info Update                 \
- - [ ]    S → C: Initialize World Border            \
- - [ ]    S → C: Update Time                        \
- - [ ]    S → C: Set Default Spawn Position         \
- - [ ]    S → C: Game Event                         \
- - [ ]    S → C: Set Ticking State                  \
- - [ ]    S → C: Step Tick                          \
- - [ ]    S → C: Set Center Chunk                   \
- - [ ]    S → C: Chunk Data and Update Light        \
- - [ ]    S → C: inventory, entities, etc.          \
+ - [x]    C→S: Handshake State=2                 
+ - [x]    C→S: Login Start                       
+ - [x]    S → C: Login Success                   
+ - [x]    C → S: Login Acknowledged              
+ - [ ]    C → S: Serverbound Plugin Message      
+ - [ ]    C → S: Client Information              
+ - [ ]    S → C: Clientbound Plugin Message      
+ - [ ]    S → C: Feature Flags                   
+ - [x]    S → C: Clientbound Known Packs         
+ - [ ]    C → S: Serverbound Known Packs         
+ - [ ]    S → C: Registry Data                   
+ - [ ]    S → C: Update Tags                     
+ - [ ]    S → C: Finish Configuration            
+ - [ ]    C → S: Acknowledge Finish Configuration
+ - [ ]    S → C: Login (play)                    
+ - [ ]    S → C: Change Difficulty               
+ - [ ]    S → C: Player Abilities                
+ - [ ]    S → C: Set Held Item                   
+ - [ ]    S → C: Update Recipes                  
+ - [ ]    S → C: Entity Event                    
+ - [ ]    S → C: Commands                        
+ - [ ]    S → C: Update Recipe Book              
+ - [ ]    S → C: Synchronize Player Position     
+ - [ ]    C → S: Confirm Teleportation           
+ - [ ]    C → S: Set Player Position and Rotation
+ - [ ]    S → C: Server Data                     
+ - [ ]    S → C: Player Info Update              
+ - [ ]    S → C: Player Info Update              
+ - [ ]    S → C: Initialize World Border         
+ - [ ]    S → C: Update Time                     
+ - [ ]    S → C: Set Default Spawn Position      
+ - [ ]    S → C: Game Event                      
+ - [ ]    S → C: Set Ticking State               
+ - [ ]    S → C: Step Tick                       
+ - [ ]    S → C: Set Center Chunk                
+ - [ ]    S → C: Chunk Data and Update Light     
+ - [ ]    S → C: inventory, entities, etc.       
