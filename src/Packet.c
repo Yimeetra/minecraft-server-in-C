@@ -31,14 +31,14 @@ Packet Packet_copy(Packet packet) {
 }
 
 void Packet_calculate_length(Packet* packet) {
-    packet->length = packet->id/128 + 1 + packet->data.count;
+    packet->length = 1 + packet->data.count;
 }
 
 void packet_to_bytearray(Packet packet, ByteArray* array) {
     Packet_calculate_length(&packet);
     ba_append_varint(array, packet.length);
     ba_append_varint(array, packet.id);
-    ba_append_array(array, packet.data.bytes, packet.data.count, 1);
+    ba_append(array, packet.data.bytes, packet.data.count);
 }
 
 void PacketQueue_append(PacketQueue* packet_queue, Packet packet) {

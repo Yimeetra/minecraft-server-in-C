@@ -24,14 +24,6 @@ fd_set fd_in, fd_out;
 Client clients[MAX_CLIENTS];
 PacketQueue packet_queue;
 
-void generate_uuid(char* nickname, unsigned char* result)
-{
-    char temp[16];
-    strcat(temp, "OfflinePlayer:");
-    strcat(temp, nickname);
-    md5String(temp, result);
-}
-
 void close_connection(Client* client) {
     shutdown(client->socket_info.socket, SD_BOTH);
     closesocket(client->socket_info.socket);

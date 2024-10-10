@@ -9,3 +9,10 @@ Client client_new(SOCKET socket) {
     
     return client;
 }
+
+void generate_uuid(char* nickname, unsigned char* result) {
+    char temp[16];
+    strcat(temp, "OfflinePlayer:");
+    strcat(temp, nickname);
+    md5String(temp, result);
+}

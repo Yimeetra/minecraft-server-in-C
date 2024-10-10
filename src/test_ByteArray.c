@@ -5,7 +5,7 @@
 #include <memory.h>
 
 int test_append_byte() {
-    ByteArray a = {0};
+    ByteArray a = ba_new(0);
 
     ba_append_byte(&a, 0x11);
     ba_append_byte(&a, 0x22);
@@ -19,7 +19,7 @@ int test_append_byte() {
 }
 
 int test_append_varint() {
-    ByteArray a = {0};
+    ByteArray a = ba_new(0);
 
     ba_append_varint(&a, 2097151);
     ba_append_varint(&a, 2097151);
@@ -37,7 +37,7 @@ int test_append_varint() {
 }
 
 int test_read_varint() {
-    ByteArray a = {0};
+    ByteArray a = ba_new(0);
 
     ba_append_varint(&a, 2097151);
     
@@ -46,7 +46,7 @@ int test_read_varint() {
 }
 
 int test_shift() {
-    ByteArray a = {0};
+    ByteArray a = ba_new(0);
 
     ba_append_varint(&a, 2097151);
     ba_shift(&a, 2);
@@ -57,7 +57,7 @@ int test_shift() {
 }
 
 int test_pull_byte() {
-    ByteArray a = {0};
+    ByteArray a = ba_new(0);
 
     ba_append_byte(&a, 0x66);
     ba_append_byte(&a, 0x12);
@@ -69,7 +69,7 @@ int test_pull_byte() {
 }
 
 int test_pull_varint() {
-    ByteArray a = {0};
+    ByteArray a = ba_new(0);
 
     ba_append_varint(&a, 12345);
     ba_append_varint(&a, 76543);
@@ -86,39 +86,13 @@ int test_new() {
 
 int test_append() {
     ByteArray a = {0};
-    
-    ba_append(&a, &(int){0x12345678}, sizeof(int));
+    byte b[] = {0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04};
 
-    assert(a.bytes[0] == 0x12);
-    assert(a.bytes[1] == 0x34);
-    assert(a.bytes[2] == 0x56);
-    assert(a.bytes[3] == 0x78);
-
-    ba_append(&a, &(int){0xf1d2c3a4}, sizeof(int));
-
-    assert(a.bytes[4] == 0xf1);
-    assert(a.bytes[5] == 0xd2);
-    assert(a.bytes[6] == 0xc3);
-    assert(a.bytes[7] == 0xa4);
-    return 0;
-}
-
-int test_append_array() {
-    ByteArray a = {0};
-    int b[] = {0x12345678,2,3,4};
-    
-    //for (int i = 0; i < sizeof(b)/sizeof(int); ++i) {
-    //    ba_append(&a, &b[i], sizeof(int));
-    //}
-//
-    //for (int i = 0; i < a.length; ++i) {
-    //    printf("%.2x ", a.bytes[i]);
-    //}
-    ba_append_array(&a, b, sizeof(b)/sizeof(int), sizeof(int));
+    ba_append(&a, b, sizeof(b));
 
     byte c[] = {0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04};
 
-    assert(memcmp(a.bytes, c, a.length) == 0);
+    assert(memcmp(a.bytes, c, a.count) == 0);
     
     return 0;
 }
@@ -153,17 +127,116 @@ int test_copy() {
     return 0;
 }
 
-int main() {
-    assert(test_append_byte() == 0);
-    assert(test_append_varint() == 0);
-    assert(test_read_varint() == 0);
-    assert(test_shift() == 0);
-    assert(test_pull_byte() == 0);
-    assert(test_pull_varint() == 0);
-    assert(test_append() == 0);
-    assert(test_append_array() == 0);
-    assert(test_copy() == 0);
+int test_append_int() {
+    ByteArray a = ba_new(0);
 
-    printf("Passed all tests!");
+    ba_append_int(&a, 0x12345678);
+
+    assert(a.bytes[0] == 0x12);
+    assert(a.bytes[1] == 0x34);
+    assert(a.bytes[2] == 0x56);
+    assert(a.bytes[3] == 0x78);
+
+    ba_append_int(&a, 0xffaaddcc);
+
+    assert(a.bytes[4] == 0xff);
+    assert(a.bytes[5] == 0xaa);
+    assert(a.bytes[6] == 0xdd);
+    assert(a.bytes[7] == 0xcc);
+
+    assert(a.count == 8);
+    assert(a.length >= a.count);
+
+    return 0;
+}
+
+int test_read_int() {
+    ByteArray a = ba_new(0);
+    ba_append_int(&a, 0x12345678);
+    assert(ba_read_int(&a) == 0x12345678);
+    return 0;
+}
+
+int test_pull_int() {
+    ByteArray a = ba_new(0);
+    ba_append_int(&a, 123);
+    ba_append_int(&a, 4567);
+
+    assert(ba_pull_int(&a) == 123);
+    assert(ba_pull_int(&a) == 4567);
+
+    assert(a.count == 0);
+    
+    return 0;
+}
+
+int test_append_string() {
+    ByteArray a = ba_new(0);
+    char hello[] = "hello!";
+    ba_append_string(&a, hello, sizeof(hello));
+    
+    assert(memcmp(a.bytes+1, hello, 6) == 0);
+    assert(a.count == 7);
+
+    return 0;
+}
+
+int test_read_string() {
+    ByteArray a = ba_new(0);
+    char b[6];
+    int b_size;
+    char hello[] = "hello!";
+    ba_append_string(&a, hello, sizeof(hello));
+
+    ba_read_string(&a, b, &b_size);
+
+    assert(memcmp(b, hello, 6) == 0);
+    assert(memcmp(a.bytes+1, hello, 6) == 0);
+    assert(b_size == 6);
+    assert(a.count == 7);
+
+    return 0;
+}
+
+int test_pull_string() {
+    ByteArray a = ba_new(0);
+    char b[6];
+    int b_size;
+    char hello[] = "hello!";
+    ba_append_string(&a, hello, sizeof(hello));
+
+    ba_pull_string(&a, b, &b_size);
+
+    assert(memcmp(b, hello, b_size) == 0);
+    assert(b_size == 6);
+    assert(a.count == 0);
+
+    return 0;
+}
+
+int main() {
+    assert(test_copy() == 0); printf(".");
+
+    assert(test_shift() == 0); printf(".");
+
+    assert(test_append_byte() == 0); printf(".");
+    assert(test_pull_byte() == 0); printf(".");
+
+    assert(test_append_varint() == 0); printf(".");
+    assert(test_read_varint() == 0); printf(".");
+    assert(test_pull_varint() == 0); printf(".");
+
+    assert(test_append() == 0); printf(".");
+
+    assert(test_append_int() == 0); printf(".");
+    assert(test_read_int() == 0); printf(".");
+    assert(test_pull_int() == 0); printf(".");
+
+    assert(test_append_string() == 0); printf(".");
+    assert(test_read_string() == 0); printf(".");
+    assert(test_pull_string() == 0); printf(".");
+
+
+    printf("\nPassed all tests!");
     return 0;
 }

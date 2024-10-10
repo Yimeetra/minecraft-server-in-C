@@ -21,7 +21,7 @@ int test_parse_packet() {
     ByteArray byte_array = ba_new(0);
     byte temp[] = {0x10, 0x00, 0xff, 0x05, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, 0x63, 0xdd, 0x02};
 
-    ba_append_array(&byte_array, temp, sizeof(temp)/sizeof(byte), sizeof(byte));
+    ba_append(&byte_array, temp, sizeof(temp));
 
     packet = parse_packet(byte_array);
 
@@ -57,7 +57,7 @@ int test_Packet_copy() {
     Packet packet2;
     ByteArray byte_array = ba_new(0);
     byte temp[] = {0x10, 0x00, 0xff, 0x05, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, 0x63, 0xdd, 0x02};
-    ba_append_array(&byte_array, temp, sizeof(temp)/sizeof(byte), sizeof(byte));
+    ba_append(&byte_array, temp, sizeof(temp));
 
     packet1 = parse_packet(byte_array);
 
@@ -94,14 +94,14 @@ int test_PacketQueue_append() {
     ByteArray byte_array1 = ba_new(0);
     byte temp1[] = {0x10, 0x00, 0xff, 0x05, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, 0x63, 0xdd, 0x01};
 
-    ba_append_array(&byte_array1, temp1, sizeof(temp1)/sizeof(byte), sizeof(byte));
+    ba_append(&byte_array1, temp1, sizeof(temp1));
     packet1 = parse_packet(byte_array1);
 
     Packet packet2;
     ByteArray byte_array2 = ba_new(0);
     byte temp2[] = {0x01, 0x00};
 
-    ba_append_array(&byte_array2, temp2, sizeof(temp2)/sizeof(byte), sizeof(byte));
+    ba_append(&byte_array2, temp2, sizeof(temp2));
     packet2 = parse_packet(byte_array2);
 
     PacketQueue_append(&packet_queue, packet1);

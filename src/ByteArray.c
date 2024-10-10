@@ -11,6 +11,10 @@ ByteArray ba_new(int length) {
     return byte_array;
 }
 
+void ba_free(ByteArray* byte_array) {
+    free(byte_array->bytes);
+}
+
 ByteArray ba_copy(ByteArray byte_array) {
     ByteArray copy = byte_array;
     copy.bytes = malloc(byte_array.length);
@@ -18,11 +22,15 @@ ByteArray ba_copy(ByteArray byte_array) {
     return copy;
 }
 
+void ba_extend(ByteArray* byte_array, int size) {
+    byte_array->length += size;
+    byte_array->bytes = realloc(byte_array->bytes, byte_array->length);
+}
+
 void ba_append_byte(ByteArray* byte_array, byte value) {
     byte_array->count += 1;
     if (byte_array->length < byte_array->count) {
-        byte_array->length += 1;
-        byte_array->bytes = realloc(byte_array->bytes, byte_array->length*sizeof(value));
+        ba_extend(byte_array, 1);
     }
     byte_array->bytes[byte_array->count-1] = value;
 }
@@ -81,16 +89,56 @@ int ba_pull_varint(ByteArray* byte_array) {
     return result;
 }
 
+
+// appends in big endian
 void ba_append(ByteArray* byte_array, void* value, int size) {
-    for (int i = size-1; i >= 0; --i) {
-        ba_append_byte(byte_array, ((byte*)value)[i]);
+    if (byte_array->count + size > byte_array->length) {
+        ba_extend(byte_array, byte_array->count + size - byte_array->length);
     }
+    memcpy(byte_array->bytes+byte_array->count, (byte*)value, size);
+    byte_array->count += size;
 }
 
-void ba_append_array(ByteArray* byte_array, void* array, int length, int items_size) {
-    for (int i = 0; i < length; ++i) {
-        for (int j = items_size-1; j >= 0; --j) {
-            ba_append_byte(byte_array, ((byte*)array)[i*items_size+j]);
-        }
+void ba_append_int(ByteArray* byte_array, int value) {
+    if (byte_array->length < byte_array->count + 4) {
+        ba_extend(byte_array, 4);
     }
+    byte_array->bytes[byte_array->count+0] = value >> 24;
+    byte_array->bytes[byte_array->count+1] = value >> 16;
+    byte_array->bytes[byte_array->count+2] = value >> 8;
+    byte_array->bytes[byte_array->count+3] = value >> 0;
+    byte_array->count += 4;
+}
+
+int ba_read_int(ByteArray* byte_array) {
+    int result = byte_array->bytes[0] << 24 |
+                 byte_array->bytes[1] << 16 |
+                 byte_array->bytes[2] << 8  |
+                 byte_array->bytes[3] << 0  ;
+    return result;
+}
+
+int ba_pull_int(ByteArray* byte_array) {
+    int result = ba_read_int(byte_array);
+    ba_shift(byte_array, 4);
+    return result;
+}
+
+void ba_append_string(ByteArray* byte_array, char* string, int size) {
+    ba_append_varint(byte_array, size-1);
+    ba_append(byte_array, string, size-1);
+}
+
+void ba_read_string(ByteArray* byte_array, char* string, int* size) {
+    ByteArray copy = ba_copy(*byte_array);
+    int temp = ba_pull_varint(&copy);
+    memcpy(string, copy.bytes, temp);
+    *size = temp;
+}
+
+void ba_pull_string(ByteArray* byte_array, char* string, int* size) {
+    int temp = ba_pull_varint(byte_array);
+    memcpy(string, byte_array->bytes, temp);
+    ba_shift(byte_array, temp);
+    *size = temp;
 }
