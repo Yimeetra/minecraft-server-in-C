@@ -14,4 +14,5 @@ The only functionality now is recieving packets and printing their data.
   - [x] create packetizer (method to create packets).
   - [x] add operations with string for bytearray.
   - [ ] add multithreading.
-  - [ ] send multiple packets if on cycle.
+  - [x] send multiple packets if on cycle.
+  - [ ] create NBT structure and methods.

@@ -70,6 +70,9 @@ void handle_packet(Packet* packet, Client* client) {
             break;
         case CONFIGURATION:
             switch (packet->id) {
+                case 0x00: break;
+                case 0x02: break;
+                case 0x07: break;
                 default:
                     printf("Unimplemented packet with id %d for CONFIGURATION game state\n", packet->id);
                     close_connection(client);
@@ -158,9 +161,13 @@ int main()
                 }
 
                 if (FD_ISSET(client->socket_info.socket, &fd_out)) {
-                    send(client->socket_info.socket, client->socket_info.send_buf.bytes, client->socket_info.send_buf.count, 0);
-                    printf("Sent packet\n");
-                    client->socket_info.send_buf.count = 0;
+                    while (client->socket_info.send_buf.count > 0) {
+                        Packet packet = parse_packet(client->socket_info.send_buf);
+                        print_packet(packet);
+                        send(client->socket_info.socket, client->socket_info.send_buf.bytes, packet.full_length, 0);
+                        printf("Sent packet\n");
+                        ba_shift(&client->socket_info.send_buf, packet.full_length);
+                    }
                 }
             }
         } 

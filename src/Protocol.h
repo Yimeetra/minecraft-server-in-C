@@ -31,3 +31,6 @@ void HandleLoginStart(Packet *packet, Client *client);
 void SendLoginSuccess(Packet *packet, Client *client);
 void HandleLoginAckAcknowledged(Packet *packet, Client *client);
 void SendKnownPacks(Packet *packet, Client *client);
+void SendAllRegistryData(Packet *packet, Client *client);
+void SendFinishConfiguration(Packet *packet, Client *client);
+void SendUpdateTags(Packet *packet, Client *client);

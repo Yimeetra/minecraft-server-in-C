@@ -7,7 +7,7 @@ Packet Packet_new(int id) {
     packet.full_length = 1;
     packet.id = id;
     packet.length = 0;
-    packet.data = ba_new(1024);
+    packet.data = ba_new(0);
     return packet;
 }
 
@@ -34,11 +34,13 @@ void Packet_calculate_length(Packet* packet) {
     packet->length = 1 + packet->data.count;
 }
 
-void packet_to_bytearray(Packet packet, ByteArray* array) {
+ByteArray packet_to_bytearray(Packet packet) {
+    ByteArray array = ba_new(0);
     Packet_calculate_length(&packet);
-    ba_append_varint(array, packet.length);
-    ba_append_varint(array, packet.id);
-    ba_append(array, packet.data.bytes, packet.data.count);
+    ba_append_varint(&array, packet.length);
+    ba_append_varint(&array, packet.id);
+    ba_append(&array, packet.data.bytes, packet.data.count);
+    return array;
 }
 
 void PacketQueue_append(PacketQueue* packet_queue, Packet packet) {
