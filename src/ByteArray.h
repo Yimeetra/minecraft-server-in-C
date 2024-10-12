@@ -3,11 +3,11 @@
 #define SEGMENT_BITS 0b01111111
 #define CONTINUE_BIT 0b10000000
 
-typedef unsigned char byte;
+typedef unsigned char Byte;
 typedef struct {
     int length;
     int count;
-    byte *bytes;
+    Byte *bytes;
 } ByteArray;
 
 ByteArray ba_new(int length);
@@ -16,9 +16,9 @@ ByteArray ba_copy(ByteArray byte_array);
 void ba_extend(ByteArray* byte_array, int size);
 void ba_shift(ByteArray* byte_array, int value);
 
-void ba_append_byte(ByteArray* byte_array, byte value);
-byte ba_read_byte(ByteArray* byte_array);
-byte ba_pull_byte(ByteArray* byte_array);
+void ba_append_byte(ByteArray* byte_array, Byte value);
+Byte ba_read_byte(ByteArray* byte_array);
+Byte ba_pull_byte(ByteArray* byte_array);
 
 void ba_append_varint(ByteArray* byte_array, int value);
 int ba_read_varint(ByteArray* byte_array);
@@ -37,3 +37,11 @@ void ba_pull_string(ByteArray* byte_array, char* string, int* size);
 #define ba_append_bool ba_append_byte
 #define ba_read_bool ba_read_byte
 #define ba_pull_bool ba_pull_byte
+
+void ba_append_float(ByteArray* byte_array, float value);
+float ba_read_float(ByteArray* byte_array);
+float ba_pull_float(ByteArray* byte_array);
+
+void ba_append_double(ByteArray* byte_array, double value);
+double ba_read_double(ByteArray* byte_array);
+double ba_pull_double(ByteArray* byte_array);

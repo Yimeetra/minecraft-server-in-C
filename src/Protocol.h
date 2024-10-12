@@ -22,15 +22,24 @@
 //    bool allow_server_listings;
 //} Client;
 
+typedef enum {
+    START_WAITING_FOR_CHUNKS = 13,
+    TOP
+} GameEvent;
+
 void HandleHandshake(Packet *packet, Client *client);
-void HandleStatusRequest(Packet *packet, Client *client);
-void SendStatusResponse(Packet *packet, Client *client);
+void HandleStatusRequest(Client *client);
+void SendStatusResponse(Client *client);
 void HandlePingRequest(Packet *packet, Client *client);
 void SendPongResponse(Packet *packet, Client *client);
 void HandleLoginStart(Packet *packet, Client *client);
-void SendLoginSuccess(Packet *packet, Client *client);
-void HandleLoginAckAcknowledged(Packet *packet, Client *client);
-void SendKnownPacks(Packet *packet, Client *client);
-void SendAllRegistryData(Packet *packet, Client *client);
-void SendFinishConfiguration(Packet *packet, Client *client);
-void SendUpdateTags(Packet *packet, Client *client);
+void SendLoginSuccess(Client *client);
+void HandleLoginAckAcknowledged(Client *client);
+void SendKnownPacks(Client *client);
+void SendAllRegistryData(Client *client);
+void SendFinishConfiguration(Client *client);
+void SendUpdateTags(Client *client);
+void HandleFinishConfigurationAcknowledged(Client *client);
+void SendPlayLogin(Client *client);
+void SendGameEvent(Client *client, GameEvent event, float value);
+void SendSyncronisePlayerPosition(Client *client, double x, double y, double z, float pitch, float yaw, byte flags);

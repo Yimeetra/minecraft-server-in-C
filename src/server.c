@@ -9,6 +9,8 @@
 #include "Packet.h"
 #include "Client.h"
 #include <stdbool.h>
+#include "server.h"
+#include "registries.h"
 
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 5
@@ -23,6 +25,7 @@ fd_set fd_in, fd_out;
 
 Client clients[MAX_CLIENTS];
 PacketQueue packet_queue;
+ServerSettings settings;
 
 void print_packet(Packet packet) {
     printf("Parsed packet:\n");
@@ -50,7 +53,7 @@ void handle_packet(Packet* packet, Client* client) {
             break;
         case STATUS:
             switch (packet->id) {
-                case 0x00: HandleStatusRequest(packet, client); break;
+                case 0x00: HandleStatusRequest(client); break;
                 case 0x01: HandlePingRequest(packet, client); break;
                 default:
                     printf("Unimplemented packet with id %d for STATUS game state\n", packet->id);
@@ -61,7 +64,7 @@ void handle_packet(Packet* packet, Client* client) {
         case LOGIN:
             switch (packet->id) {
                 case 0x00: HandleLoginStart(packet, client); break;
-                case 0x03: HandleLoginAckAcknowledged(packet, client); break;
+                case 0x03: HandleLoginAckAcknowledged(client); break;
                 default:
                     printf("Unimplemented packet with id %d for LOGIN game state\n", packet->id);
                     close_connection(client);
@@ -72,6 +75,7 @@ void handle_packet(Packet* packet, Client* client) {
             switch (packet->id) {
                 case 0x00: break;
                 case 0x02: break;
+                case 0x03: HandleFinishConfigurationAcknowledged(client); break;
                 case 0x07: break;
                 default:
                     printf("Unimplemented packet with id %d for CONFIGURATION game state\n", packet->id);
@@ -96,6 +100,20 @@ void handle_packet(Packet* packet, Client* client) {
 
 int main()
 {
+    settings.is_hardcore = false;
+    settings.dimension_count = 1;
+    settings.dimension_name = "minecraft:overworld";
+    settings.max_players = MAX_CLIENTS;
+    settings.view_distance = 4;
+    settings.simulation_distance = 4;
+    settings.reduced_debug_info = true;
+    settings.enable_respawn_screen = true;
+    settings.do_limited_crafting = false;
+    settings.hashed_seed = 0x0000000000000000;
+    settings.enforces_secure_chat = false;
+
+    init_registries();
+
     WSAStartup(MAKEWORD(2,2), &wsadata);
 
     server = socket(AF_INET, SOCK_STREAM, 0);

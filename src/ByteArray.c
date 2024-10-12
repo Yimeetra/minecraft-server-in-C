@@ -5,7 +5,7 @@
 
 ByteArray ba_new(int length) {
     ByteArray byte_array;
-    byte_array.bytes = (byte*)malloc(length*sizeof(byte));
+    byte_array.bytes = (Byte*)malloc(length*sizeof(Byte));
     byte_array.length = length;
     byte_array.count = 0;
     return byte_array;
@@ -27,7 +27,7 @@ void ba_extend(ByteArray* byte_array, int size) {
     byte_array->bytes = realloc(byte_array->bytes, byte_array->length);
 }
 
-void ba_append_byte(ByteArray* byte_array, byte value) {
+void ba_append_byte(ByteArray* byte_array, Byte value) {
     byte_array->count += 1;
     if (byte_array->length < byte_array->count) {
         ba_extend(byte_array, 1);
@@ -35,7 +35,7 @@ void ba_append_byte(ByteArray* byte_array, byte value) {
     byte_array->bytes[byte_array->count-1] = value;
 }
 
-byte ba_read_byte(ByteArray* byte_array) {
+Byte ba_read_byte(ByteArray* byte_array) {
     return byte_array->bytes[0];
 }
 
@@ -54,7 +54,7 @@ int ba_read_varint(ByteArray* byte_array) {
 
 void ba_append_varint(ByteArray* byte_array, int value) {
     do {
-        byte chunk = value & SEGMENT_BITS;
+        Byte chunk = value & SEGMENT_BITS;
         ba_append_byte(byte_array, chunk | CONTINUE_BIT);
         value >>= 7;
     } while (value);
@@ -68,8 +68,8 @@ void ba_shift(ByteArray* byte_array, int value) {
     memcpy(byte_array->bytes, byte_array->bytes+value, byte_array->length-1);
 }
 
-byte ba_pull_byte(ByteArray* byte_array) {
-    byte result = byte_array->bytes[0];
+Byte ba_pull_byte(ByteArray* byte_array) {
+    Byte result = byte_array->bytes[0];
     ba_shift(byte_array, 1);
     return result;
 }
@@ -95,7 +95,7 @@ void ba_append(ByteArray* byte_array, void* value, int size) {
     if (byte_array->count + size > byte_array->length) {
         ba_extend(byte_array, byte_array->count + size - byte_array->length);
     }
-    memcpy(byte_array->bytes+byte_array->count, (byte*)value, size);
+    memcpy(byte_array->bytes+byte_array->count, (Byte*)value, size);
     byte_array->count += size;
 }
 
@@ -141,4 +141,62 @@ void ba_pull_string(ByteArray* byte_array, char* string, int* size) {
     memcpy(string, byte_array->bytes, temp);
     ba_shift(byte_array, temp);
     if (size) *size = temp;
+}
+
+void ba_append_float(ByteArray* byte_array, float value) {
+    if (byte_array->length < byte_array->count + 4) {
+        ba_extend(byte_array, 4);
+    }
+    byte_array->bytes[byte_array->count+0] = (int)value >> 24;
+    byte_array->bytes[byte_array->count+1] = (int)value >> 16;
+    byte_array->bytes[byte_array->count+2] = (int)value >> 8;
+    byte_array->bytes[byte_array->count+3] = (int)value >> 0;
+    byte_array->count += 4;
+}
+
+float ba_read_float(ByteArray* byte_array) {
+    float result = byte_array->bytes[0] << 24 |
+                   byte_array->bytes[1] << 16 |
+                   byte_array->bytes[2] << 8  |
+                   byte_array->bytes[3] << 0  ;
+    return result;
+}
+
+float ba_pull_float(ByteArray* byte_array) {
+    float result = ba_read_float(byte_array);
+    ba_shift(byte_array, 4);
+    return result;
+}
+
+void ba_append_double(ByteArray* byte_array, double value) {
+    if (byte_array->length < byte_array->count + 4) {
+        ba_extend(byte_array, 4);
+    }
+    byte_array->bytes[byte_array->count+0] = (long long)value >> 8*7;
+    byte_array->bytes[byte_array->count+1] = (long long)value >> 8*6;
+    byte_array->bytes[byte_array->count+2] = (long long)value >> 8*5;
+    byte_array->bytes[byte_array->count+3] = (long long)value >> 8*4;
+    byte_array->bytes[byte_array->count+4] = (long long)value >> 8*3;
+    byte_array->bytes[byte_array->count+5] = (long long)value >> 8*2;
+    byte_array->bytes[byte_array->count+6] = (long long)value >> 8*1;
+    byte_array->bytes[byte_array->count+7] = (long long)value >> 8*0;
+    byte_array->count += 8;
+}
+
+double ba_read_double(ByteArray* byte_array) {
+    double result = ((long long)byte_array->bytes[0] << 8*7) |
+                    ((long long)byte_array->bytes[1] << 8*6) |
+                    ((long long)byte_array->bytes[2] << 8*5) |
+                    ((long long)byte_array->bytes[3] << 8*4) |
+                    ((long long)byte_array->bytes[4] << 8*3) |
+                    ((long long)byte_array->bytes[5] << 8*2) |
+                    ((long long)byte_array->bytes[6] << 8*1) |
+                    ((long long)byte_array->bytes[7] << 8*0) ;
+    return result;
+}
+
+double ba_pull_double(ByteArray* byte_array) {
+    double result = ba_read_double(byte_array);
+    ba_shift(byte_array, 8);
+    return result;
 }

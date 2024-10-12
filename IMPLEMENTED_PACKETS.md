@@ -8,11 +8,11 @@
  - [ ]    S → C: Feature Flags                   
  - [x]    S → C: Clientbound Known Packs         
  - [ ]    C → S: Serverbound Known Packs         
- - [ ]    S → C: Registry Data                   
+ - [x]    S → C: Registry Data   (IMPLEMENTED PARTIALLY)                 
  - [ ]    S → C: Update Tags                     
- - [ ]    S → C: Finish Configuration            
- - [ ]    C → S: Acknowledge Finish Configuration
- - [ ]    S → C: Login (play)                    
+ - [x]    S → C: Finish Configuration            
+ - [x]    C → S: Acknowledge Finish Configuration
+ - [x]    S → C: Login (play)                    
  - [ ]    S → C: Change Difficulty               
  - [ ]    S → C: Player Abilities                
  - [ ]    S → C: Set Held Item                   
@@ -20,7 +20,7 @@
  - [ ]    S → C: Entity Event                    
  - [ ]    S → C: Commands                        
  - [ ]    S → C: Update Recipe Book              
- - [ ]    S → C: Synchronize Player Position     
+ - [x]    S → C: Synchronize Player Position     
  - [ ]    C → S: Confirm Teleportation           
  - [ ]    C → S: Set Player Position and Rotation
  - [ ]    S → C: Server Data                     
@@ -29,7 +29,7 @@
  - [ ]    S → C: Initialize World Border         
  - [ ]    S → C: Update Time                     
  - [ ]    S → C: Set Default Spawn Position      
- - [ ]    S → C: Game Event                      
+ - [x]    S → C: Game Event                      
  - [ ]    S → C: Set Ticking State               
  - [ ]    S → C: Step Tick                       
  - [ ]    S → C: Set Center Chunk                
