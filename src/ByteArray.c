@@ -169,8 +169,8 @@ float ba_pull_float(ByteArray* byte_array) {
 }
 
 void ba_append_double(ByteArray* byte_array, double value) {
-    if (byte_array->length < byte_array->count + 4) {
-        ba_extend(byte_array, 4);
+    if (byte_array->length < byte_array->count + 8) {
+        ba_extend(byte_array, 8);
     }
     byte_array->bytes[byte_array->count+0] = (long long)value >> 8*7;
     byte_array->bytes[byte_array->count+1] = (long long)value >> 8*6;
@@ -198,5 +198,26 @@ double ba_read_double(ByteArray* byte_array) {
 double ba_pull_double(ByteArray* byte_array) {
     double result = ba_read_double(byte_array);
     ba_shift(byte_array, 8);
+    return result;
+}
+
+void ba_append_short(ByteArray* byte_array, short value) {
+    if (byte_array->length < byte_array->count + 2) {
+        ba_extend(byte_array, 2);
+    }
+    byte_array->bytes[byte_array->count+0] = value >> 8;
+    byte_array->bytes[byte_array->count+1] = value >> 0;
+    byte_array->count += 2;
+}
+
+short ba_read_short(ByteArray* byte_array) {
+    short result = byte_array->bytes[0] << 8  |
+                   byte_array->bytes[1] << 0  ;
+    return result;
+}
+
+short ba_pull_short(ByteArray* byte_array) {
+    short result = ba_read_short(byte_array);
+    ba_shift(byte_array, 2);
     return result;
 }

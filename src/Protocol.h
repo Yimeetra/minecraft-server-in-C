@@ -43,3 +43,8 @@ void HandleFinishConfigurationAcknowledged(Client *client);
 void SendPlayLogin(Client *client);
 void SendGameEvent(Client *client, GameEvent event, float value);
 void SendSyncronisePlayerPosition(Client *client, double x, double y, double z, float pitch, float yaw, byte flags);
+void SendSetCenterChunk(Client *client, int x, int z);
+void HandleConfirmTeleportation(Packet *packet, Client *client);
+void HandleSetPlayerPosition(Packet *packet, Client *client);
+void HandleSetPlayerRotation(Packet *packet, Client *client);
+void HandleSetPlayerPositionAndRotation(Packet *packet, Client *client);

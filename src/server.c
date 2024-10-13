@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include "server.h"
 #include "registries.h"
+#include "Teleportation.h"
 
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 5
@@ -26,6 +27,7 @@ fd_set fd_in, fd_out;
 Client clients[MAX_CLIENTS];
 PacketQueue packet_queue;
 ServerSettings settings;
+Teleportation teleportations[1024] = {[0 ... 1023] = {true, 0, 0, 0, 0, 0}};
 
 void print_packet(Packet packet) {
     printf("Parsed packet:\n");
@@ -46,7 +48,7 @@ void handle_packet(Packet* packet, Client* client) {
             switch (packet->id) {
                 case 0x00: HandleHandshake(packet, client); break;
                 default:
-                    printf("Unimplemented packet with id %d for HANDSHAKE game state\n", packet->id);
+                    printf("Unimplemented packet with id 0x%.2x for HANDSHAKE game state\n", packet->id);
                     close_connection(client);
                     break;
             }
@@ -56,7 +58,7 @@ void handle_packet(Packet* packet, Client* client) {
                 case 0x00: HandleStatusRequest(client); break;
                 case 0x01: HandlePingRequest(packet, client); break;
                 default:
-                    printf("Unimplemented packet with id %d for STATUS game state\n", packet->id);
+                    printf("Unimplemented packet with id 0x%.2x for STATUS game state\n", packet->id);
                     close_connection(client);
                     break;
             }
@@ -66,7 +68,7 @@ void handle_packet(Packet* packet, Client* client) {
                 case 0x00: HandleLoginStart(packet, client); break;
                 case 0x03: HandleLoginAckAcknowledged(client); break;
                 default:
-                    printf("Unimplemented packet with id %d for LOGIN game state\n", packet->id);
+                    printf("Unimplemented packet with id 0x%.2x for LOGIN game state\n", packet->id);
                     close_connection(client);
                     break;
             }
@@ -78,15 +80,19 @@ void handle_packet(Packet* packet, Client* client) {
                 case 0x03: HandleFinishConfigurationAcknowledged(client); break;
                 case 0x07: break;
                 default:
-                    printf("Unimplemented packet with id %d for CONFIGURATION game state\n", packet->id);
+                    printf("Unimplemented packet with id 0x%.2x for CONFIGURATION game state\n", packet->id);
                     close_connection(client);
                     break;
             }
             break;
         case PLAY:
             switch (packet->id) {
+                case 0x00: HandleConfirmTeleportation(packet, client); break;
+                case 0x1A: HandleSetPlayerPosition(packet, client); break;
+                case 0x1B: HandleSetPlayerRotation(packet, client); break;
+                case 0x1C: HandleSetPlayerPositionAndRotation(packet, client); break;
                 default:
-                    printf("Unimplemented packet with id %d for PLAY game state\n", packet->id);
+                    printf("Unimplemented packet with id 0x%.2x for PLAY game state\n", packet->id);
                     close_connection(client);
                     break;
             }
@@ -172,7 +178,7 @@ int main()
                     while (client->socket_info.recv_buf.count > 0) {
                         Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
                         ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length);
-                        print_packet(recieved_packet);
+                        //print_packet(recieved_packet);
 
                         handle_packet(&recieved_packet, client);
                     }
@@ -181,9 +187,9 @@ int main()
                 if (FD_ISSET(client->socket_info.socket, &fd_out)) {
                     while (client->socket_info.send_buf.count > 0) {
                         Packet packet = parse_packet(client->socket_info.send_buf);
-                        print_packet(packet);
+                        //print_packet(packet);
                         send(client->socket_info.socket, client->socket_info.send_buf.bytes, packet.full_length, 0);
-                        printf("Sent packet\n");
+                        //printf("Sent packet\n");
                         ba_shift(&client->socket_info.send_buf, packet.full_length);
                     }
                 }

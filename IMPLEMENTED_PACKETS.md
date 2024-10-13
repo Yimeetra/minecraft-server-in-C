@@ -21,8 +21,8 @@
  - [ ]    S → C: Commands                        
  - [ ]    S → C: Update Recipe Book              
  - [x]    S → C: Synchronize Player Position     
- - [ ]    C → S: Confirm Teleportation           
- - [ ]    C → S: Set Player Position and Rotation
+ - [x]    C → S: Confirm Teleportation           
+ - [x]    C → S: Set Player Position and Rotation
  - [ ]    S → C: Server Data                     
  - [ ]    S → C: Player Info Update              
  - [ ]    S → C: Player Info Update              

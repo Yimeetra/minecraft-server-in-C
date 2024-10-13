@@ -18,6 +18,12 @@ typedef struct {
     char nickname[17];
     char UUID[17];
     bool login_acknowledged;
+    double x;
+    double y;
+    double z;
+    float pitch;
+    float yaw;
+    bool on_ground;
 } Client;
 
 Client client_new(SOCKET socket);

@@ -96,6 +96,72 @@ void init_registries() {
                 registry.registry.worldgenBiome = worldgenBiome;
                 Registries_append(registry);
             }
+        } else if (strcmp(registry_json->string, "minecraft:banner_pattern") == 0) {    
+            cJSON *entry;
+            cJSON_ArrayForEach(entry, registry_json) {
+                Registry registry;
+                BannerPattern bannerPattern;
+                strcpy(bannerPattern.name, entry->string);
+
+                registry.type = BANNER_PATTERN;
+                registry.registry.bannerPattern = bannerPattern;
+                Registries_append(registry);
+            }
+        } else if (strcmp(registry_json->string, "minecraft:chat_type") == 0) {  
+            cJSON *entry;
+            cJSON_ArrayForEach(entry, registry_json) {
+                Registry registry;
+                ChatType chatType;
+                strcpy(chatType.name, entry->string);
+
+                registry.type = CHAT_TYPE;
+                registry.registry.chatType = chatType;
+                Registries_append(registry);
+            }   
+        } else if (strcmp(registry_json->string, "minecraft:damage_type") == 0) {  
+            cJSON *entry;
+            cJSON_ArrayForEach(entry, registry_json) {
+                Registry registry;
+                DamageType damageType;
+                strcpy(damageType.name, entry->string);
+
+                registry.type = DAMAGE_TYPE;
+                registry.registry.damageType = damageType;
+                Registries_append(registry);
+            }  
+        } else if (strcmp(registry_json->string, "minecraft:dimension_type") == 0) {     
+            cJSON *entry;
+            cJSON_ArrayForEach(entry, registry_json) {
+                Registry registry;
+                DimensionType dimensionType;
+                strcpy(dimensionType.name, entry->string);
+
+                registry.type = DIMENSION_TYPE;
+                registry.registry.dimensionType = dimensionType;
+                Registries_append(registry);
+            }  
+        } else if (strcmp(registry_json->string, "minecraft:trim_material") == 0) {     
+            cJSON *entry;
+            cJSON_ArrayForEach(entry, registry_json) {
+                Registry registry;
+                TrimMaterial trimMaterial;
+                strcpy(trimMaterial.name, entry->string);
+
+                registry.type = TRIM_MATERIAL;
+                registry.registry.trimMaterial = trimMaterial;
+                Registries_append(registry);
+            } 
+        } else if (strcmp(registry_json->string, "minecraft:trim_pattern") == 0) {   
+            cJSON *entry;
+            cJSON_ArrayForEach(entry, registry_json) {
+                Registry registry;
+                TrimPattern trimPattern;
+                strcpy(trimPattern.name, entry->string);
+
+                registry.type = TRIM_PATTERN;
+                registry.registry.trimPattern = trimPattern;
+                Registries_append(registry);
+            }   
         } else {
             printf("registry %s is unexpected\n", registry_json->string);
             //exit(-1);

@@ -1,9 +1,26 @@
 #include <stdbool.h>
 
+/*
+
+Создать структуры реестров по типу
+struct Block {
+    struct AcaciaButton {
+        
+    }
+}
+
+*/
+
 typedef enum RegistryType {
     PAINTING_VARIANT,
     WOLF_VARIANT,
     WORLDGEN_BIOME,
+    BANNER_PATTERN,
+    CHAT_TYPE,
+    DAMAGE_TYPE,
+    DIMENSION_TYPE,
+    TRIM_MATERIAL,
+    TRIM_PATTERN,
     REGISTRY_TYPE_TOP
 } RegistryType;
 
@@ -55,12 +72,61 @@ typedef struct WorldgenBiome {
     } payload;
 } WorldgenBiome;
 
+typedef struct DamageType {
+    char name[256];
+    struct {
+
+    } payload;
+} DamageType;
+
+typedef struct ChatType {
+    char name[256];
+    struct {
+
+    } payload;
+} ChatType;
+
+typedef struct DimensionType {
+    char name[256];
+    struct {
+
+    } payload;
+} DimensionType;
+
+typedef struct TrimMaterial {
+    char name[256];
+    struct {
+
+    } payload;
+} TrimMaterial;
+
+typedef struct TrimPattern {
+    char name[256];
+    struct {
+
+    } payload;
+} TrimPattern;
+
+typedef struct BannerPattern {
+    char name[256];
+    struct {
+
+    } payload;
+} BannerPattern;
+
+
 typedef struct Registry {
     RegistryType type;
     union {
         PaintingVariant paintingVariant;
         WolfVariant wolfVariant;
         WorldgenBiome worldgenBiome;
+        BannerPattern bannerPattern;
+        ChatType chatType;
+        DamageType damageType;
+        DimensionType dimensionType;
+        TrimMaterial trimMaterial;
+        TrimPattern trimPattern;
     } registry;
 } Registry;
 

@@ -1,13 +1,12 @@
 # Minecraft server implementation written in C.
 
 ## Current functionality:
-Basically, it can do nothing.... Yet :) \
-The only functionality now is recieving packets and printing their data.
+You can enter the world, but currently it is empty :)\
 
 ### TODO:
   - [x] create client struct (socket, gameState, nickname, etc.).
   - [ ] write basic world loader or something like that.
-  - [ ] make possible for player to join world.
+  - [x] make possible for player to join world.
   - [x] make possible multiple connections.
   - [x] handle multiple packits in one recv.
   - [x] make server pingable.
@@ -16,3 +15,4 @@ The only functionality now is recieving packets and printing their data.
   - [ ] add multithreading.
   - [x] send multiple packets if on cycle.
   - [ ] create NBT structure and methods.
+  - [ ] hardcode all registries.

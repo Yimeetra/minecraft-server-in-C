@@ -2,7 +2,7 @@
 #include <string.h>
 
 Client client_new(SOCKET socket) {
-    Client client;
+    Client client = {0};
     client.game_state = HANDSHAKE;
     client.socket_info.recv_buf = ba_new(1024);
     client.socket_info.send_buf = ba_new(1024);

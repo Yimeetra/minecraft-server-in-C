@@ -4,9 +4,13 @@
 #include "cJSON/cJSON.h"
 #include "server.h"
 #include "registries.h"
+#include "Chunk.h"
+#include "NBT.h"
+#include "Teleportation.h"
 
 extern ServerSettings settings;
 extern Registries registries;
+extern Teleportation teleportations[1024];
 
 void print_packest(Packet packet) {
     printf("Parsed packet:\n");
@@ -94,15 +98,6 @@ void SendAllRegistryData(Client *client) {
     ByteArray response;
 
     response_packet = Packet_new(0x07);
-    ba_append_string(&response_packet.data, "minecraft:dimension_type", 25);
-    ba_append_varint(&response_packet.data, 1);
-    ba_append_string(&response_packet.data, "minecraft:overworld", 20);
-    ba_append_byte(&response_packet.data, false);
-
-    response = packet_to_bytearray(response_packet);
-    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
-
-    response_packet = Packet_new(0x07);
     ba_append_string(&response_packet.data, "minecraft:painting_variant", 27);
     ba_append_varint(&response_packet.data, Registries_get_registry_count(PAINTING_VARIANT));
 
@@ -140,6 +135,84 @@ void SendAllRegistryData(Client *client) {
     }
     response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+
+    response_packet = Packet_new(0x07);
+    ba_append_string(&response_packet.data, "minecraft:banner_pattern", 25);
+    ba_append_varint(&response_packet.data, Registries_get_registry_count(BANNER_PATTERN));
+
+    for (int i = 0; i < registries.count; ++i) {
+        if (registries.registries[i].type == BANNER_PATTERN) {
+            ba_append_string(&response_packet.data, registries.registries[i].registry.bannerPattern.name, strlen(registries.registries[i].registry.bannerPattern.name)+1);
+            ba_append_bool(&response_packet.data, false);
+        } 
+    }
+    response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+
+    response_packet = Packet_new(0x07);
+    ba_append_string(&response_packet.data, "minecraft:chat_type", 20);
+    ba_append_varint(&response_packet.data, Registries_get_registry_count(CHAT_TYPE));
+
+    for (int i = 0; i < registries.count; ++i) {
+        if (registries.registries[i].type == CHAT_TYPE) {
+            ba_append_string(&response_packet.data, registries.registries[i].registry.chatType.name, strlen(registries.registries[i].registry.chatType.name)+1);
+            ba_append_bool(&response_packet.data, false);
+        } 
+    }
+    response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+
+    response_packet = Packet_new(0x07);
+    ba_append_string(&response_packet.data, "minecraft:damage_type", 22);
+    ba_append_varint(&response_packet.data, Registries_get_registry_count(DAMAGE_TYPE));
+
+    for (int i = 0; i < registries.count; ++i) {
+        if (registries.registries[i].type == DAMAGE_TYPE) {
+            ba_append_string(&response_packet.data, registries.registries[i].registry.damageType.name, strlen(registries.registries[i].registry.damageType.name)+1);
+            ba_append_bool(&response_packet.data, false);
+        } 
+    }
+    response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+
+    response_packet = Packet_new(0x07);
+    ba_append_string(&response_packet.data, "minecraft:dimension_type", 25);
+    ba_append_varint(&response_packet.data, Registries_get_registry_count(DIMENSION_TYPE));
+
+    for (int i = 0; i < registries.count; ++i) {
+        if (registries.registries[i].type == DIMENSION_TYPE) {
+            ba_append_string(&response_packet.data, registries.registries[i].registry.dimensionType.name, strlen(registries.registries[i].registry.dimensionType.name)+1);
+            ba_append_bool(&response_packet.data, false);
+        } 
+    }
+    response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+
+    response_packet = Packet_new(0x07);
+    ba_append_string(&response_packet.data, "minecraft:trim_material", 24);
+    ba_append_varint(&response_packet.data, Registries_get_registry_count(TRIM_MATERIAL));
+
+    for (int i = 0; i < registries.count; ++i) {
+        if (registries.registries[i].type == TRIM_MATERIAL) {
+            ba_append_string(&response_packet.data, registries.registries[i].registry.trimMaterial.name, strlen(registries.registries[i].registry.trimMaterial.name)+1);
+            ba_append_bool(&response_packet.data, false);
+        } 
+    }
+    response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);   
+
+    response_packet = Packet_new(0x07);
+    ba_append_string(&response_packet.data, "minecraft:trim_pattern", 23);
+    ba_append_varint(&response_packet.data, Registries_get_registry_count(TRIM_PATTERN));
+
+    for (int i = 0; i < registries.count; ++i) {
+        if (registries.registries[i].type == TRIM_PATTERN) {
+            ba_append_string(&response_packet.data, registries.registries[i].registry.trimPattern.name, strlen(registries.registries[i].registry.trimPattern.name)+1);
+            ba_append_bool(&response_packet.data, false);
+        } 
+    }
+    response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);     
 }
 
 void SendFinishConfiguration(Client *client) {
@@ -150,8 +223,9 @@ void SendFinishConfiguration(Client *client) {
 void HandleFinishConfigurationAcknowledged(Client *client) {
     client->game_state = PLAY;
     SendPlayLogin(client);
-    SendGameEvent(client, START_WAITING_FOR_CHUNKS, 0);
     SendSyncronisePlayerPosition(client, 0, 0, 0, 0, 0, 0b00011111);
+    SendGameEvent(client, START_WAITING_FOR_CHUNKS, 0);
+    SendSetCenterChunk(client, 0, 0);
 }
 
 void SendPlayLogin(Client *client) {
@@ -200,8 +274,86 @@ void SendSyncronisePlayerPosition(Client *client, double x, double y, double z, 
     ba_append_float(&response_packet.data, pitch);
     ba_append_float(&response_packet.data, yaw);
     ba_append_byte(&response_packet.data, flags);
-    ba_append_varint(&response_packet.data, 1);
+    for (int i = 0; i < 1024; ++i) {
+        if (teleportations[i].ack) {
+            teleportations[i].ack = false;
+            teleportations[i].x = x;
+            teleportations[i].y = y;
+            teleportations[i].z = z;
+            teleportations[i].pitch = pitch;
+            teleportations[i].yaw = yaw;
+            ba_append_varint(&response_packet.data, i);
+            break;
+        }
+    }
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+}
+
+void SendChunkDataAndUpdateLight(Client *client, Chunk chunk) {
+    Packet response_packet = Packet_new(0x27);
+    
+    // X and Z fields
+    ba_append_int(&response_packet.data, chunk.x);
+    ba_append_int(&response_packet.data, chunk.z);
+
+    // Heightmaps NBT
+    ba_append_byte(&response_packet.data, 0x0A);
+    ba_append_byte(&response_packet.data, 0x09);
+    ba_append_string(&response_packet.data, "MOTION_BLOCKING", 16);
+    ba_append_int(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0x09);
+    ba_append_string(&response_packet.data, "MOTION_BLOCKING", 16);
+    ba_append_int(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0x00);
+    
+    ByteArray chunk_data = ba_new(0);
+    for (int i = 0; i < 24; ++i) {
+        ChunkSection section = chunk.sections[i];
+    }
+
+    ByteArray response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+}
+
+void SendSetCenterChunk(Client *client, int x, int z) {
+    Packet response_packet = Packet_new(0x54);
+    ba_append_varint(&response_packet.data, x);
+    ba_append_varint(&response_packet.data, z);
+
+    ByteArray response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+}
+
+void HandleConfirmTeleportation(Packet *packet, Client *client) {
+    int tp_id = ba_read_varint(&packet->data);
+    teleportations[tp_id].ack = true;
+    client->x = teleportations[tp_id].x;
+    client->y = teleportations[tp_id].y;
+    client->z = teleportations[tp_id].z;
+    client->pitch = teleportations[tp_id].pitch;
+    client->yaw = teleportations[tp_id].yaw;
+}
+
+void HandleSetPlayerPosition(Packet *packet, Client *client) {
+    client->x = ba_pull_double(&packet->data);
+    client->y = ba_pull_double(&packet->data) + 1.62;
+    client->z = ba_pull_double(&packet->data);
+    client->on_ground = ba_pull_bool(&packet->data);
+}
+
+void HandleSetPlayerRotation(Packet *packet, Client *client) {
+    client->yaw = ba_pull_float(&packet->data);
+    client->pitch = ba_pull_float(&packet->data);
+    client->on_ground = ba_pull_bool(&packet->data);
+}
+
+void HandleSetPlayerPositionAndRotation(Packet *packet, Client *client) {
+    client->x = ba_pull_double(&packet->data);
+    client->y = ba_pull_double(&packet->data) + 1.62;
+    client->z = ba_pull_double(&packet->data);
+    client->yaw = ba_pull_float(&packet->data);
+    client->pitch = ba_pull_float(&packet->data);
+    client->on_ground = ba_pull_bool(&packet->data);
 }
