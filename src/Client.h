@@ -5,6 +5,7 @@
 #include "ByteArray.h"
 #include "md5.h"
 #include <stdbool.h>
+#include <pthread.h>
 
 typedef struct {
     SOCKET socket;
@@ -15,6 +16,9 @@ typedef struct {
 typedef struct {
     SocketInfo socket_info;
     GameState game_state;
+    pthread_t tid;
+    bool alive;
+    time_t last_keepalive;
     char nickname[17];
     char UUID[17];
     bool login_acknowledged;

@@ -10,6 +10,7 @@ Client client_new(SOCKET socket) {
     memset(client.nickname, 0, 16);
     memset(client.UUID, 0, 16);
     client.login_acknowledged = false;
+    client.alive = true;
     return client;
 }
 

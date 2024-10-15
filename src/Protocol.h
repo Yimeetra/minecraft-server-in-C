@@ -48,3 +48,5 @@ void HandleConfirmTeleportation(Packet *packet, Client *client);
 void HandleSetPlayerPosition(Packet *packet, Client *client);
 void HandleSetPlayerRotation(Packet *packet, Client *client);
 void HandleSetPlayerPositionAndRotation(Packet *packet, Client *client);
+void SendPlayKeepAlive(Client *client);
+void HandlePlayKeepAlive(Packet *packet, Client *client);

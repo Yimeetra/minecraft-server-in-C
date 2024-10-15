@@ -49,3 +49,7 @@ double ba_pull_double(ByteArray* byte_array);
 void ba_append_short(ByteArray* byte_array, short value);
 short ba_read_short(ByteArray* byte_array);
 short ba_pull_short(ByteArray* byte_array);
+
+void ba_append_long(ByteArray* byte_array, long long value);
+long long ba_read_long(ByteArray* byte_array);
+long long ba_pull_long(ByteArray* byte_array);

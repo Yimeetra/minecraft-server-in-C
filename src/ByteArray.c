@@ -221,3 +221,36 @@ short ba_pull_short(ByteArray* byte_array) {
     ba_shift(byte_array, 2);
     return result;
 }
+
+void ba_append_long(ByteArray* byte_array, long long value) {
+    if (byte_array->length < byte_array->count + 8) {
+        ba_extend(byte_array, 8);
+    }
+    byte_array->bytes[byte_array->count+0] = value >> 8*7;
+    byte_array->bytes[byte_array->count+1] = value >> 8*6;
+    byte_array->bytes[byte_array->count+2] = value >> 8*5;
+    byte_array->bytes[byte_array->count+3] = value >> 8*4;
+    byte_array->bytes[byte_array->count+4] = value >> 8*3;
+    byte_array->bytes[byte_array->count+5] = value >> 8*2;
+    byte_array->bytes[byte_array->count+6] = value >> 8*1;
+    byte_array->bytes[byte_array->count+7] = value >> 8*0;
+    byte_array->count += 8;
+}
+
+long long ba_read_long(ByteArray* byte_array) {
+    long long result = ((long long)byte_array->bytes[0] << 8*7) |
+                       ((long long)byte_array->bytes[1] << 8*6) |
+                       ((long long)byte_array->bytes[2] << 8*5) |
+                       ((long long)byte_array->bytes[3] << 8*4) |
+                       ((long long)byte_array->bytes[4] << 8*3) |
+                       ((long long)byte_array->bytes[5] << 8*2) |
+                       ((long long)byte_array->bytes[6] << 8*1) |
+                       ((long long)byte_array->bytes[7] << 8*0) ;
+    return result;
+}
+
+long long ba_pull_long(ByteArray* byte_array) {
+    long long result = ba_read_long(byte_array);
+    ba_shift(byte_array, 8);
+    return result;
+}

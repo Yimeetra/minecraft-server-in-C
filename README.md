@@ -12,7 +12,7 @@ You can enter the world, but currently it is empty :)\
   - [x] make server pingable.
   - [x] create packetizer (method to create packets).
   - [x] add operations with string for bytearray.
-  - [ ] add multithreading.
+  - [x] add multithreading.
   - [x] send multiple packets if on cycle.
   - [ ] create NBT structure and methods.
   - [ ] hardcode all registries.

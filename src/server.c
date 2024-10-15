@@ -12,22 +12,24 @@
 #include "server.h"
 #include "registries.h"
 #include "Teleportation.h"
+#include <pthread.h>
+#include <time.h>
 
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 5
 
 WSADATA wsadata;
-
-TIMEVAL tv = {0,1};
+TIMEVAL tv = {0,10};
 
 SOCKET server;
-SOCKADDR_IN server_addr, client_addr;
-fd_set fd_in, fd_out;
+SOCKADDR_IN server_addr;
+pthread_attr_t attr;
 
 Client clients[MAX_CLIENTS];
-PacketQueue packet_queue;
+PacketQueue send_queue;
 ServerSettings settings;
 Teleportation teleportations[1024] = {[0 ... 1023] = {true, 0, 0, 0, 0, 0}};
+
 
 void print_packet(Packet packet) {
     printf("Parsed packet:\n");
@@ -88,9 +90,10 @@ void handle_packet(Packet* packet, Client* client) {
         case PLAY:
             switch (packet->id) {
                 case 0x00: HandleConfirmTeleportation(packet, client); break;
+                case 0x18: HandlePlayKeepAlive(packet, client); break;
                 case 0x1A: HandleSetPlayerPosition(packet, client); break;
-                case 0x1B: HandleSetPlayerRotation(packet, client); break;
-                case 0x1C: HandleSetPlayerPositionAndRotation(packet, client); break;
+                case 0x1B: HandleSetPlayerPositionAndRotation(packet, client); break;
+                case 0x1C: HandleSetPlayerRotation(packet, client); break;
                 default:
                     printf("Unimplemented packet with id 0x%.2x for PLAY game state\n", packet->id);
                     close_connection(client);
@@ -102,6 +105,61 @@ void handle_packet(Packet* packet, Client* client) {
             close_connection(client);
             break;
     }
+}
+
+void *client_thread(void *param) {
+    Client *client = (Client*) param;
+    fd_set fd_in, fd_out;
+    int select_result = 0;
+
+    while (true) {
+        time_t tick = time(0);
+        FD_ZERO(&fd_in);
+        FD_ZERO(&fd_out);
+
+        FD_SET(client->socket_info.socket, &fd_in);
+        FD_SET(client->socket_info.socket, &fd_out);
+
+        select_result = select(0, &fd_in, &fd_out, NULL, &tv);
+        if (select_result <= 0) continue;
+
+        if (FD_ISSET(client->socket_info.socket, &fd_in)) {
+            if (client->socket_info.recv_buf.count <= 0) {
+                client->socket_info.recv_buf.count = recv(client->socket_info.socket, client->socket_info.recv_buf.bytes, BUFFER_SIZE, 0);
+                if (client->socket_info.recv_buf.count <= 0) {
+                    printf("Connection closed\n");
+                    close_connection(client);
+                    break;
+                }
+            }
+            while (client->socket_info.recv_buf.count > 0) {
+                Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
+                ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length);
+                handle_packet(&recieved_packet, client);
+            }
+        }
+
+        if (FD_ISSET(client->socket_info.socket, &fd_out)) {
+            while (client->socket_info.send_buf.count > 0) {
+                Packet packet = parse_packet(client->socket_info.send_buf);
+                send(client->socket_info.socket, client->socket_info.send_buf.bytes, packet.full_length, 0);
+                ba_shift(&client->socket_info.send_buf, packet.full_length);
+            }
+        }
+
+        if (client->game_state == PLAY) {
+            if (client->alive && tick-client->last_keepalive >= 5) {
+                SendPlayKeepAlive(client);
+            }
+
+            if (tick-client->last_keepalive >= 15) {
+                close_connection(client);
+                break;
+            }
+        }
+    }
+
+    pthread_exit(0);
 }
 
 int main()
@@ -119,6 +177,7 @@ int main()
     settings.enforces_secure_chat = false;
 
     init_registries();
+    pthread_attr_init(&attr);
 
     WSAStartup(MAKEWORD(2,2), &wsadata);
 
@@ -137,74 +196,14 @@ int main()
     printf("Server is running on port 25565\n");
     
     while (1) {
-        FD_ZERO(&fd_in);
-        FD_ZERO(&fd_out);
-
-        FD_SET(server, &fd_in);
-
         for (int i = 0; i < MAX_CLIENTS; ++i) {
-            if (clients[i].socket_info.socket != SOCKET_ERROR) {
-                if (clients[i].socket_info.send_buf.count > 0) {
-                    FD_SET(clients[i].socket_info.socket, &fd_out);
-                }    
-                FD_SET(clients[i].socket_info.socket, &fd_in);
-            }
-        }
-
-        int select_result = select(0, &fd_in, &fd_out, NULL, &tv);
-        if (select_result > 0) {
-            if (FD_ISSET(server, &fd_in)) {
+            if (clients[i].socket_info.socket == SOCKET_ERROR) {
+                clients[i] = client_new(accept(server, NULL, NULL));
                 printf("Incomming connection\n");
-                for (int i = 0; i < MAX_CLIENTS; ++i) {
-                    if (clients[i].socket_info.socket == SOCKET_ERROR) {
-                        clients[i] = client_new(accept(server, NULL, NULL));
-                        break;
-                    }
-                }
+                pthread_create(&clients[i].tid, &attr, client_thread, &clients[i]);
+                break;
             }
-
-            for (int i = 0; i < MAX_CLIENTS; ++i) {
-                Client* client = &clients[i];
-                if (client->socket_info.socket == SOCKET_ERROR) continue;
-                if (FD_ISSET(client->socket_info.socket, &fd_in)) {
-                    if (client->socket_info.recv_buf.count <= 0) {
-                        client->socket_info.recv_buf.count = recv(client->socket_info.socket, client->socket_info.recv_buf.bytes, BUFFER_SIZE, 0);
-                        if (client->socket_info.recv_buf.count <= 0) {
-                            printf("Connection closed\n");
-                            close_connection(client);
-                            break;
-                        }
-                    }
-                    while (client->socket_info.recv_buf.count > 0) {
-                        Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
-                        ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length);
-                        //print_packet(recieved_packet);
-
-                        handle_packet(&recieved_packet, client);
-                    }
-                }
-
-                if (FD_ISSET(client->socket_info.socket, &fd_out)) {
-                    while (client->socket_info.send_buf.count > 0) {
-                        Packet packet = parse_packet(client->socket_info.send_buf);
-                        //print_packet(packet);
-                        send(client->socket_info.socket, client->socket_info.send_buf.bytes, packet.full_length, 0);
-                        //printf("Sent packet\n");
-                        ba_shift(&client->socket_info.send_buf, packet.full_length);
-                    }
-                }
-            }
-        } 
-        if (select_result == -1) {
-            printf("Socket error: %d\n", WSAGetLastError());
-            break;
         }
-        //printf("[");
-        //for (int i = 0; i < MAX_CLIENTS; ++i) {
-        //    printf("(%s ", GameState_name[clients[i].game_state]);
-        //    printf("%d)", clients[i].socket_info.socket);
-        //}
-        //printf("]\n");
     }
 
     

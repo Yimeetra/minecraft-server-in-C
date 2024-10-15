@@ -357,3 +357,21 @@ void HandleSetPlayerPositionAndRotation(Packet *packet, Client *client) {
     client->pitch = ba_pull_float(&packet->data);
     client->on_ground = ba_pull_bool(&packet->data);
 }
+
+void SendPlayKeepAlive(Client *client) {
+    if (!client->alive) return;
+    Packet response_packet = Packet_new(0x26);
+    time_t timestamp = time(0);
+    ba_append_long(&response_packet.data, timestamp);
+    client->alive = false;
+    client->last_keepalive = timestamp;
+
+    ByteArray response = packet_to_bytearray(response_packet);
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+}
+
+void HandlePlayKeepAlive(Packet *packet, Client *client) {
+    if (ba_read_long(&packet->data) == client->last_keepalive) {
+        client->alive = true;
+    }
+}
