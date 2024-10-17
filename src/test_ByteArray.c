@@ -51,7 +51,8 @@ int test_shift() {
     ba_append_varint(&a, 2097151);
     ba_shift(&a, 2);
 
-    assert(a.bytes[0] == 0x7f);
+    assert(a.bytes[a.offset] == 0x7f);
+    assert(a.offset == 2);
     assert(a.count == 1);
     return 0;
 }
@@ -63,7 +64,7 @@ int test_pull_byte() {
     ba_append_byte(&a, 0x12);
 
     assert(ba_pull_byte(&a) == 0x66);
-    assert(a.bytes[0] == 0x12);
+    assert(a.bytes[a.offset] == 0x12);
     assert(a.count == 1);
     return 0;
 }
