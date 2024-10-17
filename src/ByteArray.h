@@ -7,8 +7,11 @@ typedef unsigned char Byte;
 typedef struct {
     int length;
     int count;
+    int offset;
     Byte *bytes;
 } ByteArray;
+
+void ba_print(ByteArray byteArray);
 
 ByteArray ba_new(int length);
 ByteArray ba_copy(ByteArray byte_array);

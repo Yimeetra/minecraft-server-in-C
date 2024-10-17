@@ -12,11 +12,7 @@
 #include "server.h"
 #include "registries.h"
 #include "Teleportation.h"
-#include <pthread.h>
 #include <time.h>
-
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
 
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 5
@@ -26,13 +22,13 @@ TIMEVAL tv = {0,10};
 
 SOCKET server;
 SOCKADDR_IN server_addr;
-pthread_attr_t attr;
 
 Client clients[MAX_CLIENTS];
 PacketQueue send_queue;
 ServerSettings settings;
 Teleportation teleportations[1024] = {[0 ... 1023] = {true, 0, 0, 0, 0, 0}};
-
+fd_set fd_in, fd_out;
+int select_result = 0;
 
 void print_packet(Packet packet) {
     printf("Parsed packet:\n");
@@ -110,68 +106,45 @@ void handle_packet(Packet* packet, Client* client) {
     }
 }
 
-void *client_thread(void *param) {
-    Client *client = (Client*) param;
-    fd_set fd_in, fd_out;
-    int select_result = 0;
+void handle_client(Client *client) {
+    time_t tick = time(0);
 
-    while (true) {
-        time_t tick = time(0);
-        FD_ZERO(&fd_in);
-        FD_ZERO(&fd_out);
-
-        FD_SET(client->socket_info.socket, &fd_in);
-        FD_SET(client->socket_info.socket, &fd_out);
-
-        select_result = select(0, &fd_in, &fd_out, NULL, &tv);
-        if (select_result <= 0) continue;
-
-        if (FD_ISSET(client->socket_info.socket, &fd_in)) {
+    if (FD_ISSET(client->socket_info.socket, &fd_in)) {
+        if (client->socket_info.recv_buf.count <= 0) {
+            client->socket_info.recv_buf.count = recv(client->socket_info.socket, client->socket_info.recv_buf.bytes, BUFFER_SIZE, 0);
             if (client->socket_info.recv_buf.count <= 0) {
-                client->socket_info.recv_buf.count = recv(client->socket_info.socket, client->socket_info.recv_buf.bytes, BUFFER_SIZE, 0);
-                if (client->socket_info.recv_buf.count <= 0) {
-                    printf("Connection closed\n");
-                    close_connection(client);
-                    break;
-                }
-            }
-            while (client->socket_info.recv_buf.count > 0) {
-                Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
-                ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length-1);
-                handle_packet(&recieved_packet, client);
-            }
-            free(client->socket_info.recv_buf.bytes);
-            client->socket_info.recv_buf = ba_new(1024);
-        }
-
-        if (FD_ISSET(client->socket_info.socket, &fd_out)) {
-            while (client->socket_info.send_buf.count > 0) {
-                Packet packet = parse_packet(client->socket_info.send_buf);
-                send(client->socket_info.socket, client->socket_info.send_buf.bytes+client->socket_info.send_buf.offset, packet.full_length-1, 0);
-                ba_shift(&client->socket_info.send_buf, packet.full_length-1);
-            }
-            free(client->socket_info.send_buf.bytes);
-            client->socket_info.send_buf = ba_new(1024);
-        }
-
-        if (client->game_state == PLAY) {
-            if (client->alive && tick-client->last_keepalive >= 5) {
-                SendPlayKeepAlive(client);
-            }
-
-            if (tick-client->last_keepalive >= 15) {
+                printf("Connection closed\n");
                 close_connection(client);
-                break;
             }
+        }
+        while (client->socket_info.recv_buf.count > 0) {
+            Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
+            ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length);
+            handle_packet(&recieved_packet, client);
         }
     }
 
-    pthread_exit(0);
+    if (FD_ISSET(client->socket_info.socket, &fd_out)) {
+        while (client->socket_info.send_buf.count > 0) {
+            Packet packet = parse_packet(client->socket_info.send_buf);
+            send(client->socket_info.socket, client->socket_info.send_buf.bytes, packet.full_length, 0);
+            ba_shift(&client->socket_info.send_buf, packet.full_length);
+        }
+    }
+
+    if (client->game_state == PLAY) {
+        if (client->alive && tick-client->last_keepalive >= 5) {
+            SendPlayKeepAlive(client);
+        }
+
+        if (tick-client->last_keepalive >= 15) {
+            close_connection(client);
+        }
+    
+    }
 }
 
 int main() {
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
     settings.is_hardcore = false;
     settings.dimension_count = 1;
     settings.dimension_name = "minecraft:overworld";
@@ -185,7 +158,6 @@ int main() {
     settings.enforces_secure_chat = false;
 
     init_registries();
-    pthread_attr_init(&attr);
 
     WSAStartup(MAKEWORD(2,2), &wsadata);
 
@@ -204,17 +176,37 @@ int main() {
     printf("Server is running on port 25565\n");
     
     while (1) {
+        FD_ZERO(&fd_in);
+        FD_ZERO(&fd_out);
+        FD_SET(server, &fd_in);
         for (int i = 0; i < MAX_CLIENTS; ++i) {
-            if (clients[i].socket_info.socket == SOCKET_ERROR) {
-                clients[i] = client_new(accept(server, NULL, NULL));
-                printf("Incomming connection\n");
-                pthread_create(&clients[i].tid, &attr, client_thread, &clients[i]);
-                break;
+            if (clients[i].socket_info.socket != SOCKET_ERROR) {
+                if (clients[i].socket_info.send_buf.count > 0) {
+                    FD_SET(clients[i].socket_info.socket, &fd_out);
+                }    
+                FD_SET(clients[i].socket_info.socket, &fd_in);
             }
         }
+        int select_result = select(0, &fd_in, &fd_out, NULL, &tv);
+
+        if (select_result > 0) {
+            if (FD_ISSET(server, &fd_in)) {
+                printf("Incomming connection\n");
+                for (int i = 0; i < MAX_CLIENTS; ++i) {
+                    if (clients[i].socket_info.socket == SOCKET_ERROR) {
+                        clients[i] = client_new(accept(server, NULL, NULL));
+                        break;
+                    }
+                }
+            }
+            for (int i = 0; i < MAX_CLIENTS; ++i) {
+                Client* client = &clients[i];
+                if (client->socket_info.socket == SOCKET_ERROR) continue;
+                handle_client(client);
+            }
+        } 
     }
 
-    
     WSACleanup();
 
     return 0;

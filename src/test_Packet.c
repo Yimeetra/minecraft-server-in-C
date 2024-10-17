@@ -44,7 +44,7 @@ int test_parse_packet() {
     }
 
     for (int i = 0; i < 15; ++i) {
-        assert(byte_array.bytes[i] == temp[i+1]);
+        assert(byte_array.bytes[byte_array.offset+i] == temp[i+1]);
     }
 
 

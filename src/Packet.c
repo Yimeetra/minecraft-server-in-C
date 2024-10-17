@@ -1,6 +1,7 @@
 #include "Packet.h"
 #include <malloc.h>
 #include <memory.h>
+#include <stdio.h>
 
 Packet Packet_new(int id) {
     Packet packet;
@@ -12,15 +13,13 @@ Packet Packet_new(int id) {
 }
 
 Packet parse_packet(ByteArray data) {
-    data = ba_copy(data);
     Packet packet;
-    int len_diff = data.count;
+    int offset = data.offset;
     packet.length = ba_pull_varint(&data);
-    len_diff -= data.count;
     packet.id = ba_pull_varint(&data);
-    packet.data = ba_copy(data);
-    packet.data.length = packet.length-len_diff;
-    packet.full_length = packet.length+len_diff;
+    packet.full_length = packet.length + data.offset - offset;
+    packet.data = ba_new(0);
+    ba_append(&packet.data, data.bytes+data.offset, packet.length-1);
     return packet;
 }
 
