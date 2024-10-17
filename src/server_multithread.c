@@ -15,6 +15,9 @@
 #include <pthread.h>
 #include <time.h>
 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 5
 
@@ -162,8 +165,9 @@ void *client_thread(void *param) {
     pthread_exit(0);
 }
 
-int main()
-{
+int main() {
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     settings.is_hardcore = false;
     settings.dimension_count = 1;
     settings.dimension_name = "minecraft:overworld";

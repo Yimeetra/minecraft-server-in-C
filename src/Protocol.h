@@ -6,6 +6,7 @@
 #include "ByteArray.h"
 #include "GameState.h"
 #include "Client.h"
+#include "Chunk.h"
 
 //typedef struct {
 //    unsigned char nickname[16];
@@ -50,3 +51,4 @@ void HandleSetPlayerRotation(Packet *packet, Client *client);
 void HandleSetPlayerPositionAndRotation(Packet *packet, Client *client);
 void SendPlayKeepAlive(Client *client);
 void HandlePlayKeepAlive(Packet *packet, Client *client);
+void SendChunkDataAndUpdateLight(Client *client, Chunk *chunk);

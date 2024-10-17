@@ -1,8 +1,11 @@
+#pragma once
+
 #include "Block.h"
+#include <stdbool.h>
 
 typedef struct ChunkSection {
     short block_count;
-    Block blocks[16][16][16];
+    unsigned int states[16][16][16];
 } ChunkSection;
 
 typedef struct Chunk {
@@ -11,10 +14,18 @@ typedef struct Chunk {
     ChunkSection sections[24];
 } Chunk;
 
+typedef struct Palette {
+    Byte bits_per_entry;
+    int length;
+    int *map;
+} Palette;
+
+
 typedef struct HeightMap {
     int heightmap[16][16];
 } HeightMap;
 
-HeightMap Chunk_heightmap(Chunk chunk);
-ChunkSection Chunk_section(Chunk chunk, int index);
-ByteArray HeightMap_to_bytearray(HeightMap heightmap);
+void Chunk_to_ByteArray(Chunk *chunk, ByteArray *byteArray);
+void ChunkSection_to_ByteArray(ChunkSection *chunkSection, ByteArray *byteArray);
+void Palette_add_state(Palette *palette, int state);
+Palette Palette_new();

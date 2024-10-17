@@ -226,6 +226,28 @@ void HandleFinishConfigurationAcknowledged(Client *client) {
     SendSyncronisePlayerPosition(client, 0, 0, 0, 0, 0, 0b00011111);
     SendGameEvent(client, START_WAITING_FOR_CHUNKS, 0);
     SendSetCenterChunk(client, 0, 0);
+    for (int i = -5; i < 6; ++i) {
+        for (int j = -5; j < 6; ++j) {
+            Chunk *chunk = malloc(sizeof(Chunk));
+            chunk->x = i;
+            chunk->z = j;
+            for (int k = 0; k < 24; ++k) {
+                for (int y = 0; y < 16; ++y) {
+                    for (int z = 0; z < 16; ++z) {
+                        for (int x = 0; x < 16; ++x) {
+                            if (k == 0) {
+                                chunk->sections[0].states[y][z][x] = 1;
+                            } else {
+                                chunk->sections[k].states[y][z][x] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+            SendChunkDataAndUpdateLight(client, chunk);
+            free(chunk);
+        }
+    }
 }
 
 void SendPlayLogin(Client *client) {
@@ -291,30 +313,21 @@ void SendSyncronisePlayerPosition(Client *client, double x, double y, double z, 
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
 }
 
-void SendChunkDataAndUpdateLight(Client *client, Chunk chunk) {
+void SendChunkDataAndUpdateLight(Client *client, Chunk *chunk) {
     Packet response_packet = Packet_new(0x27);
     
-    // X and Z fields
-    ba_append_int(&response_packet.data, chunk.x);
-    ba_append_int(&response_packet.data, chunk.z);
+    Chunk_to_ByteArray(chunk, &response_packet.data);
 
-    // Heightmaps NBT
-    ba_append_byte(&response_packet.data, 0x0A);
-    ba_append_byte(&response_packet.data, 0x09);
-    ba_append_string(&response_packet.data, "MOTION_BLOCKING", 16);
-    ba_append_int(&response_packet.data, 0);
-    ba_append_byte(&response_packet.data, 0x09);
-    ba_append_string(&response_packet.data, "MOTION_BLOCKING", 16);
-    ba_append_int(&response_packet.data, 0);
-    ba_append_byte(&response_packet.data, 0x00);
-    
-    ByteArray chunk_data = ba_new(0);
-    for (int i = 0; i < 24; ++i) {
-        ChunkSection section = chunk.sections[i];
-    }
+    ba_append_byte(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0);
+    ba_append_byte(&response_packet.data, 0);
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    free(response.bytes);
 }
 
 void SendSetCenterChunk(Client *client, int x, int z) {

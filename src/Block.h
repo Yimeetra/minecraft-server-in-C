@@ -1,9 +1,11 @@
 #include "ByteArray.h"
 
+typedef enum BlockState {
+    AIR,
+    STONE,
+} BlockType;
+
 typedef struct Block {
-    int x;
-    int y;
-    int z;
-    int type;
-    ByteArray data;
+    BlockType type;
+    unsigned int state;
 } Block;
