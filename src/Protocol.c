@@ -27,7 +27,7 @@ void print_packest(Packet packet) {
 
 void HandleHandshake(Packet *packet, Client *client)
 {
-    client->game_state = packet->data.bytes[packet->data.length-1];
+    client->game_state = packet->data.bytes[packet->data.count-1];
 }
 
 void HandleStatusRequest(Client *client) {
@@ -42,6 +42,8 @@ void SendStatusResponse(Client *client) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void HandlePingRequest(Packet *packet, Client *client) {
@@ -51,6 +53,7 @@ void HandlePingRequest(Packet *packet, Client *client) {
 void SendPongResponse(Packet *packet, Client *client) {
     ByteArray response = packet_to_bytearray(*packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
 }
 
 void HandleLoginStart(Packet *packet, Client *client) {
@@ -69,6 +72,8 @@ void SendLoginSuccess(Client *client) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void HandleLoginAckAcknowledged(Client *client) {
@@ -91,6 +96,8 @@ void SendKnownPacks(Client *client) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void SendAllRegistryData(Client *client) {
@@ -212,12 +219,17 @@ void SendAllRegistryData(Client *client) {
         } 
     }
     response = packet_to_bytearray(response_packet);
-    ba_append(&client->socket_info.send_buf, response.bytes, response.count);     
+    ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void SendFinishConfiguration(Client *client) {
-    ByteArray response = packet_to_bytearray(Packet_new(0x03));
+    Packet response_packet = Packet_new(0x03);
+    ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void HandleFinishConfigurationAcknowledged(Client *client) {
@@ -226,8 +238,8 @@ void HandleFinishConfigurationAcknowledged(Client *client) {
     SendSyncronisePlayerPosition(client, 0, 0, 0, 0, 0, 0b00011111);
     SendGameEvent(client, START_WAITING_FOR_CHUNKS, 0);
     SendSetCenterChunk(client, 0, 0);
-    for (int i = -5; i < 6; ++i) {
-        for (int j = -5; j < 6; ++j) {
+    for (int i = -2; i < 3; ++i) {
+        for (int j = -2; j < 3; ++j) {
             Chunk *chunk = malloc(sizeof(Chunk));
             chunk->x = i;
             chunk->z = j;
@@ -277,6 +289,8 @@ void SendPlayLogin(Client *client) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void SendGameEvent(Client *client, GameEvent event, float value) {
@@ -286,6 +300,8 @@ void SendGameEvent(Client *client, GameEvent event, float value) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void SendSyncronisePlayerPosition(Client *client, double x, double y, double z, float pitch, float yaw, byte flags) {
@@ -311,6 +327,8 @@ void SendSyncronisePlayerPosition(Client *client, double x, double y, double z, 
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void SendChunkDataAndUpdateLight(Client *client, Chunk *chunk) {
@@ -327,7 +345,8 @@ void SendChunkDataAndUpdateLight(Client *client, Chunk *chunk) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
-    free(response.bytes);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void SendSetCenterChunk(Client *client, int x, int z) {
@@ -337,6 +356,8 @@ void SendSetCenterChunk(Client *client, int x, int z) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void HandleConfirmTeleportation(Packet *packet, Client *client) {
@@ -381,6 +402,8 @@ void SendPlayKeepAlive(Client *client) {
 
     ByteArray response = packet_to_bytearray(response_packet);
     ba_append(&client->socket_info.send_buf, response.bytes, response.count);
+    ba_free(&response);
+    ba_free(&response_packet.data);
 }
 
 void HandlePlayKeepAlive(Packet *packet, Client *client) {

@@ -23,7 +23,18 @@ ByteArray ba_new(int length) {
 
 void ba_free(ByteArray* byte_array) {
     free(byte_array->bytes);
+    byte_array->bytes = NULL;
 }
+
+void ba_clear(ByteArray *byteArray) {
+    if (byteArray->bytes != NULL) {
+        ba_free(byteArray);
+    }
+    byteArray->bytes = (Byte*)malloc(byteArray->length*sizeof(Byte)); 
+    byteArray->count = 0;
+    byteArray->offset = 0;
+}
+
 
 ByteArray ba_copy(ByteArray byte_array) {
     ByteArray copy = byte_array;

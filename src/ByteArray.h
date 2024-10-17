@@ -15,6 +15,8 @@ void ba_print(ByteArray byteArray);
 
 ByteArray ba_new(int length);
 ByteArray ba_copy(ByteArray byte_array);
+void ba_free(ByteArray* byte_array);
+void ba_clear(ByteArray *byteArray);
 
 void ba_extend(ByteArray* byte_array, int size);
 void ba_shift(ByteArray* byte_array, int value);

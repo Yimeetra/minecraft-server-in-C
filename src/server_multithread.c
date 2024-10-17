@@ -15,9 +15,6 @@
 #include <pthread.h>
 #include <time.h>
 
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 5
 
@@ -132,6 +129,7 @@ void *client_thread(void *param) {
                 if (client->socket_info.recv_buf.count <= 0) {
                     printf("Connection closed\n");
                     close_connection(client);
+                    pthread_exit(0);
                     break;
                 }
             }
@@ -139,9 +137,9 @@ void *client_thread(void *param) {
                 Packet recieved_packet = parse_packet(client->socket_info.recv_buf);
                 ba_shift(&client->socket_info.recv_buf, recieved_packet.full_length-1);
                 handle_packet(&recieved_packet, client);
+                if (client->socket_info.socket == SOCKET_ERROR) pthread_exit(0);
             }
-            free(client->socket_info.recv_buf.bytes);
-            client->socket_info.recv_buf = ba_new(1024);
+            ba_clear(&client->socket_info.recv_buf);
         }
 
         if (FD_ISSET(client->socket_info.socket, &fd_out)) {
@@ -150,8 +148,7 @@ void *client_thread(void *param) {
                 send(client->socket_info.socket, client->socket_info.send_buf.bytes+client->socket_info.send_buf.offset, packet.full_length-1, 0);
                 ba_shift(&client->socket_info.send_buf, packet.full_length-1);
             }
-            free(client->socket_info.send_buf.bytes);
-            client->socket_info.send_buf = ba_new(1024);
+            ba_clear(&client->socket_info.send_buf);
         }
 
         if (client->game_state == PLAY) {
@@ -161,6 +158,7 @@ void *client_thread(void *param) {
 
             if (tick-client->last_keepalive >= 15) {
                 close_connection(client);
+                pthread_exit(0);
                 break;
             }
         }
@@ -170,8 +168,6 @@ void *client_thread(void *param) {
 }
 
 int main() {
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
     settings.is_hardcore = false;
     settings.dimension_count = 1;
     settings.dimension_name = "minecraft:overworld";

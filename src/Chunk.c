@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 void Chunk_to_ByteArray(Chunk *chunk, ByteArray *byteArray) {
-    ByteArray chunkData = ba_new(0);
+    ByteArray chunkData = ba_new(200000);
 
     ba_append_int(byteArray, chunk->x);
     ba_append_int(byteArray, chunk->z);
@@ -19,6 +19,7 @@ void Chunk_to_ByteArray(Chunk *chunk, ByteArray *byteArray) {
     ba_append_varint(byteArray, chunkData.count);
     ba_append(byteArray, chunkData.bytes, chunkData.count);
     ba_append_varint(byteArray, 0);
+    ba_free(&chunkData);
 }
 
 void ChunkSection_to_ByteArray(ChunkSection *chunkSection, ByteArray *byteArray) {
