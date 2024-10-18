@@ -1,7 +1,8 @@
 # Minecraft server implementation written in C.
 
 ## Current functionality:
-You can enter the world, but currently it is empty :)\
+You can enter the world, currently it is just a stone floor.\
+Server is multithreaded.\n
 
 ### TODO:
   - [x] create client struct (socket, gameState, nickname, etc.).
@@ -16,3 +17,4 @@ You can enter the world, but currently it is empty :)\
   - [x] send multiple packets if on cycle.
   - [ ] create NBT structure and methods.
   - [ ] hardcode all registries.
+  - [ ] fix all memory leaks.

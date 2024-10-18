@@ -32,6 +32,6 @@
  - [x]    S → C: Game Event                      
  - [ ]    S → C: Set Ticking State               
  - [ ]    S → C: Step Tick                       
- - [ ]    S → C: Set Center Chunk                
- - [ ]    S → C: Chunk Data and Update Light     
+ - [x]    S → C: Set Center Chunk                
+ - [x]    S → C: Chunk Data and Update Light (partially)
  - [ ]    S → C: inventory, entities, etc.       
