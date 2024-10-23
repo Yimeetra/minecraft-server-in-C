@@ -12,17 +12,67 @@ extern ServerSettings settings;
 extern Registries registries;
 extern Teleportation teleportations[1024];
 
-void print_packest(Packet packet) {
-    printf("Parsed packet:\n");
-    printf("  Length = %i\n", packet.length);
-    printf("  Id = %i\n", packet.id);
-    printf("  Data:\n");
-    printf("    Length = %i\n", packet.data.length);
-    printf("    Data = ");
-    for (int i = 0; i < packet.data.length; ++i) {
-        printf("%.2x ", packet.data.bytes[i]);
+void handle_packet(Packet* packet, Client* client) {
+    switch (client->game_state) {
+        case HANDSHAKE:
+            switch (packet->id) {
+                case 0x00: HandleHandshake(packet, client); break;
+                default:
+                    printf("Unimplemented packet with id 0x%.2x for HANDSHAKE game state\n", packet->id);
+                    close_connection(client);
+                    break;
+            }
+            break;
+        case STATUS:
+            switch (packet->id) {
+                case 0x00: HandleStatusRequest(client); break;
+                case 0x01: HandlePingRequest(packet, client); break;
+                default:
+                    printf("Unimplemented packet with id 0x%.2x for STATUS game state\n", packet->id);
+                    close_connection(client);
+                    break;
+            }
+            break;
+        case LOGIN:
+            switch (packet->id) {
+                case 0x00: HandleLoginStart(packet, client); break;
+                case 0x03: HandleLoginAckAcknowledged(client); break;
+                default:
+                    printf("Unimplemented packet with id 0x%.2x for LOGIN game state\n", packet->id);
+                    close_connection(client);
+                    break;
+            }
+            break;
+        case CONFIGURATION:
+            switch (packet->id) {
+                case 0x00: break;
+                case 0x02: break;
+                case 0x03: HandleFinishConfigurationAcknowledged(client); break;
+                case 0x07: break;
+                default:
+                    printf("Unimplemented packet with id 0x%.2x for CONFIGURATION game state\n", packet->id);
+                    close_connection(client);
+                    break;
+            }
+            break;
+        case PLAY:
+            switch (packet->id) {
+                case 0x00: HandleConfirmTeleportation(packet, client); break;
+                case 0x18: HandlePlayKeepAlive(packet, client); break;
+                case 0x1A: HandleSetPlayerPosition(packet, client); break;
+                case 0x1B: HandleSetPlayerPositionAndRotation(packet, client); break;
+                case 0x1C: HandleSetPlayerRotation(packet, client); break;
+                default:
+                    printf("Unimplemented packet with id 0x%.2x for PLAY game state\n", packet->id);
+                    close_connection(client);
+                    break;
+            }
+            break;
+        default:
+            printf("Unexpected game state\n");
+            close_connection(client);
+            break;
     }
-    printf("\n\n");
 }
 
 void HandleHandshake(Packet *packet, Client *client)

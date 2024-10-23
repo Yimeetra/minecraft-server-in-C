@@ -28,6 +28,7 @@ typedef enum {
     TOP
 } GameEvent;
 
+void handle_packet(Packet* packet, Client* client);
 void HandleHandshake(Packet *packet, Client *client);
 void HandleStatusRequest(Client *client);
 void SendStatusResponse(Client *client);

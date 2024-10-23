@@ -1,5 +1,6 @@
 #include "Client.h"
 #include <string.h>
+#include "Packet.h"
 
 Client client_new(SOCKET socket) {
     Client client = {0};
@@ -25,4 +26,12 @@ void close_connection(Client* client) {
     shutdown(client->socket_info.socket, SD_BOTH);
     closesocket(client->socket_info.socket);
     *client = client_new(SOCKET_ERROR);
+}
+
+void Client_process_in() {
+
+}
+
+void Client_process_out() {
+    
 }

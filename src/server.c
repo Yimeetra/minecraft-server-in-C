@@ -30,81 +30,6 @@ Teleportation teleportations[1024] = {[0 ... 1023] = {true, 0, 0, 0, 0, 0}};
 fd_set fd_in, fd_out;
 int select_result = 0;
 
-void print_packet(Packet packet) {
-    printf("Parsed packet:\n");
-    printf("  Length = %i\n", packet.length);
-    printf("  Id = %i\n", packet.id);
-    printf("  Data:\n");
-    printf("    Length = %i\n", packet.data.length);
-    printf("    Data = ");
-    for (int i = 0; i < packet.data.length; ++i) {
-        printf("%.2x ", packet.data.bytes[i]);
-    }
-    printf("\n\n");
-}
-
-void handle_packet(Packet* packet, Client* client) {
-    switch (client->game_state) {
-        case HANDSHAKE:
-            switch (packet->id) {
-                case 0x00: HandleHandshake(packet, client); break;
-                default:
-                    printf("Unimplemented packet with id 0x%.2x for HANDSHAKE game state\n", packet->id);
-                    close_connection(client);
-                    break;
-            }
-            break;
-        case STATUS:
-            switch (packet->id) {
-                case 0x00: HandleStatusRequest(client); break;
-                case 0x01: HandlePingRequest(packet, client); break;
-                default:
-                    printf("Unimplemented packet with id 0x%.2x for STATUS game state\n", packet->id);
-                    close_connection(client);
-                    break;
-            }
-            break;
-        case LOGIN:
-            switch (packet->id) {
-                case 0x00: HandleLoginStart(packet, client); break;
-                case 0x03: HandleLoginAckAcknowledged(client); break;
-                default:
-                    printf("Unimplemented packet with id 0x%.2x for LOGIN game state\n", packet->id);
-                    close_connection(client);
-                    break;
-            }
-            break;
-        case CONFIGURATION:
-            switch (packet->id) {
-                case 0x00: break;
-                case 0x02: break;
-                case 0x03: HandleFinishConfigurationAcknowledged(client); break;
-                case 0x07: break;
-                default:
-                    printf("Unimplemented packet with id 0x%.2x for CONFIGURATION game state\n", packet->id);
-                    close_connection(client);
-                    break;
-            }
-            break;
-        case PLAY:
-            switch (packet->id) {
-                case 0x00: HandleConfirmTeleportation(packet, client); break;
-                case 0x18: HandlePlayKeepAlive(packet, client); break;
-                case 0x1A: HandleSetPlayerPosition(packet, client); break;
-                case 0x1B: HandleSetPlayerPositionAndRotation(packet, client); break;
-                case 0x1C: HandleSetPlayerRotation(packet, client); break;
-                default:
-                    printf("Unimplemented packet with id 0x%.2x for PLAY game state\n", packet->id);
-                    close_connection(client);
-                    break;
-            }
-            break;
-        default:
-            printf("Unexpected game state\n");
-            close_connection(client);
-            break;
-    }
-}
 
 void handle_client(Client *client) {
     time_t tick = time(0);
@@ -133,9 +58,7 @@ void handle_client(Client *client) {
     }
 
     if (client->game_state == PLAY) {
-        if (client->alive && tick-client->last_keepalive >= 5) {
-            SendPlayKeepAlive(client);
-        }
+        SendPlayKeepAlive(client);
 
         if (tick-client->last_keepalive >= 15) {
             close_connection(client);
@@ -181,12 +104,11 @@ int main() {
         FD_SET(server, &fd_in);
         for (int i = 0; i < MAX_CLIENTS; ++i) {
             if (clients[i].socket_info.socket != SOCKET_ERROR) {
-                if (clients[i].socket_info.send_buf.count > 0) {
-                    FD_SET(clients[i].socket_info.socket, &fd_out);
-                }    
+                FD_SET(clients[i].socket_info.socket, &fd_out);
                 FD_SET(clients[i].socket_info.socket, &fd_in);
             }
         }
+
         int select_result = select(0, &fd_in, &fd_out, NULL, &tv);
 
         if (select_result > 0) {
@@ -204,7 +126,9 @@ int main() {
                 if (client->socket_info.socket == SOCKET_ERROR) continue;
                 handle_client(client);
             }
-        } 
+        } else if (select_result < 0) {
+            printf("Select error\n");
+        }
     }
 
     WSACleanup();

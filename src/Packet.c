@@ -3,6 +3,18 @@
 #include <memory.h>
 #include <stdio.h>
 
+void print_packet(Packet packet) {
+    printf("Length = %i\n", packet.length);
+    printf("Id = %i\n", packet.id);
+    printf("Data:\n");
+    printf("  Length = %i\n", packet.data.length);
+    printf("  Data = ");
+    for (int i = 0; i < packet.data.length; ++i) {
+        printf("%.2x ", packet.data.bytes[i]);
+    }
+    printf("\n\n");
+}
+
 Packet Packet_new(int id) {
     Packet packet;
     packet.full_length = 1;

@@ -14,6 +14,7 @@ typedef struct {
     Packet *packets;
 } PacketQueue;
 
+void print_packet(Packet packet);
 Packet parse_packet(ByteArray data);
 void PacketQueue_append(PacketQueue* packet_queue, Packet packet);
 Packet PacketQueue_pull(PacketQueue* packet_queue);
